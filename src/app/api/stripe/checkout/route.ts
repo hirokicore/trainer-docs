@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(url);
   } catch (err) {
     console.error('Stripe checkout error:', err);
-    return NextResponse.redirect(new URL('/dashboard?error=checkout', request.url));
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.redirect(new URL(`/dashboard?error=checkout&message=${encodeURIComponent(errorMessage)}`, request.url));
   }
 }
