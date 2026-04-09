@@ -1,9 +1,16 @@
-export const runtime = 'edge';
+import { Suspense } from 'react';
+import AuthForm from '@/components/auth/AuthForm';
+
+export const dynamic = 'force-dynamic';
+
+export const metadata = {
+  title: 'ログイン — TrainerDocs',
+};
 
 export default function LoginPage() {
   return (
-    <div>
-      <h1>ログイン</h1>
-    </div>
+    <Suspense>
+      <AuthForm mode="login" />
+    </Suspense>
   );
 }
