@@ -56,7 +56,7 @@ const DOCUMENT_SPECIFIC_INSTRUCTIONS: Record<DocumentType, string> = {
 };
 
 export async function generateDocument(formData: TrainerFormData): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite-preview-06-17' });
 
   const documentLabel = DOCUMENT_TYPE_LABELS[formData.documentType];
   const specificInstructions = DOCUMENT_SPECIFIC_INSTRUCTIONS[formData.documentType];
