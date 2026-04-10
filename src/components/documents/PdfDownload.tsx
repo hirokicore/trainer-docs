@@ -52,7 +52,7 @@ async function buildPdf(doc: Document): Promise<Uint8Array> {
 
   // Noto Sans JP フォント埋め込み
   const fontBytes = await getFontBytes();
-  const font = await pdfDoc.embedFont(fontBytes, { subset: true });
+  const font = await pdfDoc.embedFont(fontBytes, { subset: false });
 
   // A4 サイズ（pt）
   const A4_W = 595.28;
