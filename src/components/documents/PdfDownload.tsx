@@ -43,8 +43,7 @@ function wrapText(
 async function buildPdf(doc: Document): Promise<Uint8Array> {
   // 動的インポート（Edge Runtime / SSR を避けてブラウザ専用で実行）
   const { PDFDocument, rgb } = await import('pdf-lib');
-  const fontkitModule = await import('@pdf-lib/fontkit');
-  const fontkit = (fontkitModule as { default: unknown }).default ?? fontkitModule;
+  const fontkit = await import('@pdf-lib/fontkit').then(m => m.default ?? m);
 
   const pdfDoc = await PDFDocument.create();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
