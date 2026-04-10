@@ -55,8 +55,10 @@ const DOCUMENT_SPECIFIC_INSTRUCTIONS: Record<DocumentType, string> = {
 - クライアントが本免責事項を十分に理解・同意した旨の確認欄を設けること`,
 };
 
+const MAX_RETRIES = 3;
+
 export async function generateDocument(formData: TrainerFormData): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite-preview-06-17' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const documentLabel = DOCUMENT_TYPE_LABELS[formData.documentType];
   const specificInstructions = DOCUMENT_SPECIFIC_INSTRUCTIONS[formData.documentType];
@@ -104,7 +106,20 @@ ${specificInstructions}
 書類の本文のみを出力してください。マークダウン記法は使わず、プレーンテキストで出力してください。
 `;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (err: unknown) {
+      lastError = err;
+      const is503 =
+        (err instanceof Error && err.message.includes('503')) ||
+        (typeof err === 'object' && err !== null && 'status' in err && (err as { status: number }).status === 503);
+      if (!is503 || attempt === MAX_RETRIES) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+  throw lastError;
 }
