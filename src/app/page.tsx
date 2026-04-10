@@ -15,7 +15,7 @@ const features = [
     icon: Zap,
     title: 'AIで即時生成',
     description:
-      'Gemini AIが情報を入力するだけで、AIが生成する契約書ひな形を数秒で自動生成します。',
+      '情報を入力するだけで、契約書ひな形をGemini AIが数秒で生成します。',
   },
   {
     icon: FileText,
