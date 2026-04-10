@@ -43,7 +43,7 @@ const plans = [
     price: '¥0',
     period: '',
     description: '試しに使ってみたい方向け',
-    features: ['書類生成 月3件まで', '4種類の書類対応', 'PDFダウンロード'],
+    features: ['書類生成 月3件まで', '7種類の書類対応', 'PDFダウンロード'],
     cta: '無料で始める',
     href: '/auth/signup',
     highlight: false,
@@ -55,7 +55,7 @@ const plans = [
     description: '現役トレーナーの方に最適',
     features: [
       '書類生成 無制限',
-      '4種類の書類対応',
+      '7種類の書類対応',
       'PDFダウンロード',
       '過去書類のクラウド保存',
       'カスタムテンプレート（近日公開）',
