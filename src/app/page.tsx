@@ -15,7 +15,7 @@ const features = [
     icon: Zap,
     title: 'AIで即時生成',
     description:
-      'Gemini AIが情報を入力するだけで、法的に適切な書類を数秒で自動生成します。',
+      'Gemini AIが情報を入力するだけで、AIが生成する契約書ひな形を数秒で自動生成します。',
   },
   {
     icon: FileText,
@@ -83,7 +83,7 @@ export default function LandingPage() {
             <span className="text-yellow-300">契約書類を自動生成</span>
           </h1>
           <p className="text-lg md:text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            クライアント情報を入力するだけで、法的に適切な契約書類をAIが瞬時に作成。
+            クライアント情報を入力するだけで、AIが生成する契約書ひな形を瞬時に作成。
             もう書類作成に時間を取られない。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -110,16 +110,10 @@ export default function LandingPage() {
       {/* Social Proof */}
       <section className="bg-gray-50 py-8 px-4 border-y border-gray-200">
         <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 text-center">
-          {[
-            { value: '1,200+', label: '利用トレーナー' },
-            { value: '15,000+', label: '生成書類数' },
-            { value: '4.9/5', label: 'ユーザー評価' },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-3xl font-bold text-brand-600">{stat.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
-            </div>
-          ))}
+          <div>
+            <p className="text-2xl font-bold text-brand-600">β版提供中</p>
+            <p className="text-sm text-gray-500 mt-1">フィードバックをお待ちしています</p>
+          </div>
         </div>
       </section>
 
@@ -175,7 +169,7 @@ export default function LandingPage() {
               {
                 step: '2',
                 title: 'AIが自動生成',
-                desc: 'Gemini AIが法的に適切な書類を数秒で作成します。',
+                desc: 'Gemini AIが契約書ひな形を数秒で作成します。',
               },
               {
                 step: '3',
