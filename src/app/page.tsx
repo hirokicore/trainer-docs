@@ -19,7 +19,7 @@ const features = [
   },
   {
     icon: FileText,
-    title: '4種類の書類に対応',
+    title: '7種類の書類に対応',
     description:
       'トレーニング委託契約書・健康状態確認書・免責同意書・入会申込書をカバー。',
   },
