@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import { Download } from 'lucide-react';
 import type { Document } from '@/types';
 import { DOCUMENT_TYPE_LABELS } from '@/types';
+import * as fontkit from '@pdf-lib/fontkit';
 
 // キャッシュ：フォントバイト列をメモリに保持して2回目以降を高速化
 let cachedFontBytes: ArrayBuffer | null = null;
@@ -43,11 +44,9 @@ function wrapText(
 async function buildPdf(doc: Document): Promise<Uint8Array> {
   // 動的インポート（Edge Runtime / SSR を避けてブラウザ専用で実行）
   const { PDFDocument, rgb } = await import('pdf-lib');
-  const fontkit = await import('@pdf-lib/fontkit').then(m => m.default ?? m);
 
   const pdfDoc = await PDFDocument.create();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pdfDoc.registerFontkit(fontkit as any);
+  pdfDoc.registerFontkit(fontkit);
 
   // Noto Sans JP フォント埋め込み
   const fontBytes = await getFontBytes();
