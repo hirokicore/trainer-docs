@@ -18,7 +18,7 @@ const benefits = [
     icon: Gift,
     title: 'プロプラン相当を無料で利用',
     description:
-      'モニター期間中（3ヶ月）、書類生成無制限・クラウド保存など、すべてのプロ機能を無償で使えます。',
+      'ご利用中、書類生成無制限・クラウド保存など、すべてのプロ機能を無償で使えます。',
   },
   {
     icon: Star,
@@ -36,9 +36,8 @@ const benefits = [
 
 const conditions = [
   '現役のパーソナルトレーナー（資格の有無は問いません）',
-  '月1回程度のフィードバック（アンケート回答）に協力いただける方',
+  '実際に使ってみた感想をお送りいただける方',
   'TrainerDocs を実際の業務で試してみる意欲のある方',
-  '3ヶ月間継続して利用いただける方',
 ];
 
 const activityOptions = [
@@ -115,7 +114,7 @@ export default function MonitorsPage() {
           </h1>
           <p className="text-lg text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
             TrainerDocs をより良いサービスにするために、現役パーソナルトレーナーの方に
-            3ヶ月間のモニターとしてご協力いただける方を募集しています。
+            サービスを実際に試して、感想をお送りいただける方を募集しています。
           </p>
           <a
             href="#apply"
@@ -174,7 +173,7 @@ export default function MonitorsPage() {
               ))}
             </div>
             <p className="mt-6 text-sm text-brand-700 font-medium">
-              通常 ¥2,980/月 のプロプランが、モニター期間中（3ヶ月）無料でご利用いただけます。
+              通常 ¥2,980/月 のプロプランが、モニター期間中は無料でご利用いただけます。
             </p>
           </div>
         </div>
