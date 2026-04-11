@@ -173,7 +173,7 @@ export default function MonitorsPage() {
               ))}
             </div>
             <p className="mt-6 text-sm text-brand-700 font-medium">
-              通常 ¥2,980/月 のプロプランが、モニター期間中は無料でご利用いただけます。
+              通常 ¥2,980/月 のプロプランが、1ヶ月間無料でご利用いただけます。
             </p>
           </div>
         </div>
