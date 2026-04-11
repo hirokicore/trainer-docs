@@ -37,6 +37,9 @@ export default function Header() {
           <Link href="/#pricing" className="text-gray-600 hover:text-gray-900 text-sm">
             料金
           </Link>
+          <Link href="/monitors" className="text-sm bg-yellow-400 hover:bg-yellow-300 text-gray-900 px-3 py-1.5 rounded-lg font-medium transition-colors">
+            モニター募集
+          </Link>
           {user ? (
             <>
               <Link
@@ -95,6 +98,13 @@ export default function Header() {
             onClick={() => setMenuOpen(false)}
           >
             料金
+          </Link>
+          <Link
+            href="/monitors"
+            className="block bg-yellow-400 text-gray-900 text-sm px-4 py-2 rounded-lg font-medium text-center"
+            onClick={() => setMenuOpen(false)}
+          >
+            モニター募集
           </Link>
           {user ? (
             <>

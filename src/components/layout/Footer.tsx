@@ -37,6 +37,11 @@ export default function Footer() {
                   無料で始める
                 </Link>
               </li>
+              <li>
+                <Link href="/monitors" className="hover:text-white transition-colors">
+                  モニター募集
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "vercel --prod"
+    "deploy": "echo 'Push to main branch to deploy via Vercel GitHub integration'"
   },
   "dependencies": {
     "@fontsource/noto-sans-jp": "^5.1.0",
