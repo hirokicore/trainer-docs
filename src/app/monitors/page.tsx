@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   CheckCircle,
   Gift,
@@ -175,6 +176,22 @@ export default function MonitorsPage() {
             <p className="mt-6 text-sm text-brand-700 font-medium">
               通常 ¥2,980/月 のプロプランが、1ヶ月間無料でご利用いただけます。
             </p>
+          </div>
+
+          {/* Screenshot */}
+          <div className="mt-12">
+            <p className="text-center text-sm font-medium text-gray-400 mb-4 tracking-wide uppercase">
+              実際の画面イメージ
+            </p>
+            <div className="rounded-2xl overflow-hidden shadow-xl shadow-gray-200 border border-gray-100">
+              <Image
+                src="/screenshot-document.png"
+                alt="TrainerDocs 契約書生成画面"
+                width={960}
+                height={540}
+                className="w-full h-auto block"
+              />
+            </div>
           </div>
         </div>
       </section>

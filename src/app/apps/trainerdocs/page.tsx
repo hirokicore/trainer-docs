@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { FileText, Zap, Shield, Download, CheckCircle, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -96,6 +97,25 @@ export default function TrainerDocsPage() {
             </Link>
           </div>
           <p className="text-blue-200 text-sm mt-6">クレジットカード不要・月3件まで無料</p>
+        </div>
+      </section>
+
+      {/* Screenshot */}
+      <section className="bg-gradient-to-b from-brand-700 to-white px-4 pb-0 pt-10">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-center text-sm font-medium text-brand-200 mb-6 tracking-wide uppercase">
+            実際の画面
+          </p>
+          <div className="rounded-2xl overflow-hidden shadow-2xl shadow-brand-900/30 border border-white/10">
+            <Image
+              src="/screenshot-document.png"
+              alt="TrainerDocs 契約書生成画面"
+              width={960}
+              height={540}
+              className="w-full h-auto block"
+              priority
+            />
+          </div>
         </div>
       </section>
 
