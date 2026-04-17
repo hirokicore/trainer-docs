@@ -4,7 +4,9 @@ import { generateDocument, getGenerationEngine } from '@/lib/gemini';
 import { saveGenerationLog } from '@/lib/generation-log';
 import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, type TrainerFormData } from '@/types';
 
-export const runtime = 'edge';
+// Edge runtime は最大 25 秒のため、Gemini 生成（training_contract 等）がタイムアウトする。
+// Node.js runtime に変更し、最大 60 秒を確保する。
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
