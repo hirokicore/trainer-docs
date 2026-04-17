@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -44,20 +44,54 @@ const DOCUMENT_TYPE_DESCRIPTIONS: Partial<Record<DocumentType, string>> = {
   pro_training_contract_v1: '条文が章立てで整理された読みやすい版。10章構成で網羅的にカバー。',
 };
 
+/**
+ * 生成進捗ステップ
+ *  0: 待機中（未実行）
+ *  1: 入力内容の確認中（生成開始直後）
+ *  2: 文面生成中（約10秒後）
+ *  3: PDF作成中（約25秒後）
+ */
+type GenerationStep = 0 | 1 | 2 | 3;
+
+const GENERATION_STEP_MESSAGES: Record<Exclude<GenerationStep, 0>, string> = {
+  1: '入力内容を確認しています…（最大約60秒かかる場合があります）',
+  2: '契約書の文面を生成しています…',
+  3: 'PDFを作成しています…',
+};
+
 export default function TrainerForm({ isSubscribed = false }: { isSubscribed?: boolean }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
-  const [loading, setLoading] = useState(false);
+  const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  // タイムアウトIDを ref で保持し、完了/失敗時に必ずクリアする
+  const step2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const step3TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isGenerating = generationStep > 0;
+
+  const clearStepTimers = () => {
+    if (step2TimerRef.current) clearTimeout(step2TimerRef.current);
+    if (step3TimerRef.current) clearTimeout(step3TimerRef.current);
+    step2TimerRef.current = null;
+    step3TimerRef.current = null;
+  };
 
   const update = (field: keyof TrainerFormData, value: string | number) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
     setError('');
+    setGenerationStep(1); // Step 1: 開始直後
+
+    // Step 2: 10 秒後（Gemini がレスポンスを返し始める頃）
+    step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
+    // Step 3: 25 秒後（長い書類の場合に備えた後半演出）
+    step3TimerRef.current = setTimeout(() => setGenerationStep(3), 25_000);
+
     try {
       const res = await fetch('/api/documents/generate', {
         method: 'POST',
@@ -75,7 +109,9 @@ export default function TrainerForm({ isSubscribed = false }: { isSubscribed?: b
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '予期しないエラーが発生しました');
     } finally {
-      setLoading(false);
+      // 成功・失敗いずれでもタイマーを止め、演出をリセット
+      clearStepTimers();
+      setGenerationStep(0);
     }
   };
 
@@ -346,31 +382,50 @@ export default function TrainerForm({ isSubscribed = false }: { isSubscribed?: b
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-            <Button
-              variant="outline"
-              onClick={() => setStep((s) => s - 1)}
-              disabled={step === 1}
-            >
-              <ChevronLeft size={16} />
-              戻る
-            </Button>
-
-            {step < 4 ? (
-              <Button variant="primary" onClick={() => setStep((s) => s + 1)}>
-                次へ
-                <ChevronRight size={16} />
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                loading={loading}
-                onClick={handleSubmit}
-                size="lg"
+          <div className="mt-8 pt-6 border-t border-gray-100 space-y-4">
+            {/* 生成進捗メッセージ（generationStep > 0 のときのみ表示） */}
+            {isGenerating && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-3 text-sm text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3"
               >
-                AIで書類を生成
-              </Button>
+                <span
+                  className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin flex-shrink-0"
+                  aria-hidden="true"
+                />
+                <span>{GENERATION_STEP_MESSAGES[generationStep as Exclude<GenerationStep, 0>]}</span>
+              </div>
             )}
+
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={() => setStep((s) => s - 1)}
+                disabled={step === 1 || isGenerating}
+              >
+                <ChevronLeft size={16} />
+                戻る
+              </Button>
+
+              {step < 4 ? (
+                <Button variant="primary" onClick={() => setStep((s) => s + 1)}>
+                  次へ
+                  <ChevronRight size={16} />
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  loading={isGenerating}
+                  disabled={isGenerating}
+                  onClick={handleSubmit}
+                  size="lg"
+                  aria-busy={isGenerating}
+                >
+                  {isGenerating ? '生成中…' : 'AIで書類を生成'}
+                </Button>
+              )}
+            </div>
           </div>
         </CardBody>
       </Card>
