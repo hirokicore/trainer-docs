@@ -1,12 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TrainerFormData, DOCUMENT_TYPE_LABELS, DocumentType } from '@/types';
-import { applyTemplate, PRO_TRAINING_CONTRACT_V1_TEMPLATE } from '@/lib/templates';
+import { applyTemplate, TRAINING_CONTRACT_TEMPLATE_MAP } from '@/lib/templates';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 /** Pro版など静的テンプレートを使う書類タイプのマップ */
 const STATIC_TEMPLATE_MAP: Partial<Record<DocumentType, string>> = {
-  pro_training_contract_v1: PRO_TRAINING_CONTRACT_V1_TEMPLATE,
+  training_contract: TRAINING_CONTRACT_TEMPLATE_MAP.standard_v1,
+  pro_training_contract_v1: TRAINING_CONTRACT_TEMPLATE_MAP.pro_v1,
 };
 
 /** Gemini で動的生成する書類タイプの固有指示 */
