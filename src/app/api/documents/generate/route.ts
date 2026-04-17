@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateDocument, getGenerationEngine } from '@/lib/gemini';
 import { saveGenerationLog } from '@/lib/generation-log';
-import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, type TrainerFormData } from '@/types';
+import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, FREE_TOTAL_LIMIT, type TrainerFormData } from '@/types';
 
 // Edge runtime は最大 25 秒のため、Gemini 生成（training_contract 等）がタイムアウトする。
 // Node.js runtime に変更し、最大 60 秒を確保する。
@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
     profile?.subscription_status === 'trialing';
   const documentCount = count ?? 0;
 
-  if (!isSubscribed && documentCount >= 3) {
+  if (!isSubscribed && documentCount >= FREE_TOTAL_LIMIT) {
     // 利用上限超過はテンプレート選択前のため、ここではログしない
     return NextResponse.json(
-      { error: 'フリープランの生成上限（3件）に達しました。プロプランにアップグレードしてください。' },
+      { error: `フリープランの生成上限（累計${FREE_TOTAL_LIMIT}件）に達しました。有料プランにアップグレードしてください。` },
       { status: 403 }
     );
   }

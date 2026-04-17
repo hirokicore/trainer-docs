@@ -5,6 +5,7 @@ import { PlusCircle, FileText, CreditCard, AlertCircle } from 'lucide-react';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import DocumentList from '@/components/documents/DocumentList';
 import SubscriptionBanner from './SubscriptionBanner';
+import { FREE_TOTAL_LIMIT } from '@/types';
 import type { Document } from '@/types';
 
 export const runtime = 'edge';
@@ -37,7 +38,7 @@ export default async function DashboardPage({
 
   const isSubscribed = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing';
   const documentCount = count ?? 0;
-  const canCreate = isSubscribed || documentCount < 3;
+  const canCreate = isSubscribed || documentCount < FREE_TOTAL_LIMIT;
 
   return (
     <div className="max-w-5xl mx-auto">

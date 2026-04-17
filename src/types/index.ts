@@ -8,6 +8,9 @@ export const STANDARD_PLAN_PRICE = 1480;
 /** プロプランの月額料金（税込、円） */
 export const PRO_PLAN_PRICE = 2980;
 
+/** Freeプランの累計書類生成上限（件） */
+export const FREE_TOTAL_LIMIT = 10;
+
 // ──────────────────────────────────────────────
 // 書類タイプ
 // ──────────────────────────────────────────────

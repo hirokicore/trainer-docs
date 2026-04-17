@@ -4,6 +4,7 @@ import TrainerForm from '@/components/documents/TrainerForm';
 import LegalNotice from '@/components/layout/LegalNotice';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { FREE_TOTAL_LIMIT } from '@/types';
 
 export const runtime = 'edge';
 
@@ -34,7 +35,7 @@ export default async function NewDocumentPage() {
     profile?.subscription_status === 'trialing';
   const documentCount = count ?? 0;
 
-  if (!isSubscribed && documentCount >= 3) {
+  if (!isSubscribed && documentCount >= FREE_TOTAL_LIMIT) {
     redirect('/dashboard?limit=true');
   }
 

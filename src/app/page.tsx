@@ -68,35 +68,34 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">プロダクト</h2>
             <p className="text-gray-500">現在リリース中のSaaSです。</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Link
-              href="/apps/trainerdocs"
-              className="group flex gap-5 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md hover:border-brand-300 transition-all"
-            >
+          <div className="grid grid-cols-1 gap-6">
+            {/* TrainerDocs カード */}
+            <div className="flex flex-col sm:flex-row gap-6 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
               <div className="flex-shrink-0 w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center">
                 <Layers className="text-brand-600" size={24} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900">TrainerDocs</h3>
-                  <span className="text-xs bg-green-100 text-green-700 font-medium px-2 py-0.5 rounded-full">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <h3 className="font-semibold text-gray-900 text-lg">
+                    パーソナルトレーナー向け契約書作成ツール TrainerDocs
+                  </h3>
+                  <span className="text-xs bg-green-100 text-green-700 font-medium px-2 py-0.5 rounded-full flex-shrink-0">
                     β版公開中
                   </span>
                 </div>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  パーソナルトレーナー向けの契約書類をAIで自動生成。委託契約書・同意書・確認書などを瞬時に作成。
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                  パーソナルトレーナー専用の契約書・同意書を、テンプレートから簡単に作成できるサービスです。
+                  トレーニング委託契約書・免責同意書・キャンセルポリシーなど7種類に対応。
                 </p>
+                <Link
+                  href="/apps/trainerdocs"
+                  className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors"
+                >
+                  TrainerDocs の詳細を見る
+                  <ArrowRight size={16} />
+                </Link>
               </div>
-              <ArrowRight
-                size={18}
-                className="text-gray-300 group-hover:text-brand-500 flex-shrink-0 self-center transition-colors"
-              />
-            </Link>
-          </div>
-          <div className="mt-6 text-center">
-            <Link href="/apps" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
-              すべてのプロダクトを見る →
-            </Link>
+            </div>
           </div>
         </div>
       </section>

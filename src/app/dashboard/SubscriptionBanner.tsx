@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Zap, X } from 'lucide-react';
-import { STANDARD_PLAN_PRICE } from '@/types';
+import { STANDARD_PLAN_PRICE, FREE_TOTAL_LIMIT } from '@/types';
 
 export default function SubscriptionBanner({ documentCount }: { documentCount: number }) {
   const [dismissed, setDismissed] = useState(false);
-  const remaining = Math.max(0, 3 - documentCount);
+  const remaining = Math.max(0, FREE_TOTAL_LIMIT - documentCount);
 
   if (dismissed) return null;
 

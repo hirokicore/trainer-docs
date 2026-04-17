@@ -4,7 +4,7 @@ import { FileText, Zap, Shield, Download, CheckCircle, ArrowRight } from 'lucide
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import LegalNotice from '@/components/layout/LegalNotice';
-import { STANDARD_PLAN_PRICE, PRO_PLAN_PRICE } from '@/types';
+import { STANDARD_PLAN_PRICE, PRO_PLAN_PRICE, FREE_TOTAL_LIMIT } from '@/types';
 
 const features = [
   {
@@ -44,7 +44,7 @@ const plans = [
     badge: null,
     highlight: false,
     features: [
-      '書類生成3件まで（累計上限）',
+      `書類生成累計${FREE_TOTAL_LIMIT}件まで`,
       '標準テンプレ（サンプル版）',
       'PDFダウンロード（透かし入り）',
       'ご意見・ご要望フォームのみ',
@@ -132,7 +132,7 @@ export default function TrainerDocsPage() {
               ご意見・ご要望を送る
             </Link>
           </div>
-          <p className="text-blue-200 text-sm mt-6">クレジットカード不要・月3件まで無料</p>
+          <p className="text-blue-200 text-sm mt-6">クレジットカード不要・累計{FREE_TOTAL_LIMIT}件まで無料</p>
         </div>
       </section>
 
@@ -234,7 +234,7 @@ export default function TrainerDocsPage() {
             <p className="text-sm font-semibold text-gray-700 mb-2">フリープランについて</p>
             <ul className="space-y-1.5 text-sm text-gray-600 leading-relaxed">
               <li>・生成した契約書は、商用利用・実務利用はできません。</li>
-              <li>・書類生成は累計3件までご利用いただけます。</li>
+              <li>・書類生成は累計{FREE_TOTAL_LIMIT}件までご利用いただけます（お試し・サンプル確認用）。</li>
               <li>・過度な連続利用が見られた場合、一時的に利用を制限することがあります。</li>
             </ul>
           </div>
