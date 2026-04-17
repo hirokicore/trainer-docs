@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import TrainerForm from '@/components/documents/TrainerForm';
+import LegalNotice from '@/components/layout/LegalNotice';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -54,6 +55,10 @@ export default async function NewDocumentPage() {
       </div>
 
       <TrainerForm isSubscribed={isSubscribed} />
+
+      <div className="mt-8">
+        <LegalNotice />
+      </div>
     </div>
   );
 }

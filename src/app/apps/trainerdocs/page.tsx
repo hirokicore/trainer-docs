@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { FileText, Zap, Shield, Download, CheckCircle, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import LegalNotice from '@/components/layout/LegalNotice';
+import { STANDARD_PLAN_PRICE, PRO_PLAN_PRICE } from '@/types';
 
 const features = [
   {
@@ -27,24 +29,58 @@ const features = [
   },
 ];
 
+/**
+ * 料金プラン定義
+ *  - フリー：お試し・サンプル用（商用不可）
+ *  - スタンダード：個人トレーナー向け商用プラン
+ *  - プロ：案件数の多いトレーナー・小規模事業者向け
+ */
 const plans = [
   {
     name: 'フリー',
     price: '¥0',
-    features: ['書類生成 月3件まで', '7種類の書類対応', 'PDFダウンロード'],
+    period: null,
+    tagline: 'お試し・サンプル確認用',
+    badge: null,
+    highlight: false,
+    features: [
+      '書類生成3件まで（累計上限）',
+      '標準テンプレ（サンプル版）',
+      'PDFダウンロード（透かし入り）',
+      'ご意見・ご要望フォームのみ',
+    ],
+    // Freeプラン専用の注意文（商用不可）
+    restriction: '商用利用・実務利用はできません',
+  },
+  {
+    name: 'スタンダード',
+    price: `¥${STANDARD_PLAN_PRICE.toLocaleString('ja-JP')}`,
+    period: '/ 月（税込）',
+    tagline: '個人トレーナー向け',
+    badge: null,
+    highlight: false,
+    features: [
+      '書類生成：通常利用であれば実質無制限',
+      '標準テンプレ（商用利用OK）',
+      'PDFダウンロード（商用利用OK）',
+      'メールサポート（平日）',
+    ],
+    restriction: null,
   },
   {
     name: 'プロ',
-    price: '¥2,980',
-    period: '/ 月',
-    features: [
-      '書類生成 無制限',
-      '7種類の書類対応',
-      'PDFダウンロード',
-      '過去書類のクラウド保存',
-      'カスタムテンプレート（近日公開）',
-    ],
+    price: `¥${PRO_PLAN_PRICE.toLocaleString('ja-JP')}`,
+    period: '/ 月（税込）',
+    tagline: '案件数の多いトレーナー・小規模事業者向け',
+    badge: 'おすすめ',
     highlight: true,
+    features: [
+      '書類生成：実質無制限',
+      '標準テンプレ＋階層構造テンプレ',
+      'PDFダウンロード（商用利用OK）',
+      '優先サポート',
+    ],
+    restriction: null,
   },
 ];
 
@@ -93,7 +129,7 @@ export default function TrainerDocsPage() {
               href="/monitors"
               className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium text-lg px-8 py-4 rounded-xl border border-white/30 transition-colors"
             >
-              モニター募集中
+              ご意見・ご要望を送る
             </Link>
           </div>
           <p className="text-blue-200 text-sm mt-6">クレジットカード不要・月3件まで無料</p>
@@ -145,44 +181,64 @@ export default function TrainerDocsPage() {
       </section>
 
       {/* Pricing */}
-      <section className="bg-gray-50 py-20 px-4">
-        <div className="max-w-3xl mx-auto">
+      <section id="pricing" className="bg-gray-50 py-20 px-4">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">料金プラン</h2>
+            <p className="text-gray-500">すべてのプランでクレジットカード不要で登録できます。</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-8 border-2 ${
+                className={`relative rounded-2xl p-8 border-2 flex flex-col ${
                   plan.highlight
-                    ? 'border-brand-500 shadow-xl shadow-brand-100'
+                    ? 'border-brand-500 bg-white shadow-xl shadow-brand-100'
                     : 'border-gray-200 bg-white'
                 }`}
               >
-                {plan.highlight && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                    おすすめ
+                {plan.badge && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+                    {plan.badge}
                   </span>
                 )}
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{plan.name}</h3>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                  <p className="text-xs text-gray-400">{plan.tagline}</p>
+                </div>
                 <div className="flex items-baseline gap-1 mb-6">
                   <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                  {'period' in plan && plan.period && (
-                    <span className="text-gray-500">{plan.period}</span>
+                  {plan.period && (
+                    <span className="text-gray-500 text-sm">{plan.period}</span>
                   )}
                 </div>
-                <ul className="space-y-3">
+                <ul className="space-y-3 flex-1">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-gray-700">
-                      <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                    <li key={feature} className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
                       {feature}
                     </li>
                   ))}
                 </ul>
+                {plan.restriction && (
+                  <p className="mt-4 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 leading-relaxed">
+                    ※{plan.restriction}
+                  </p>
+                )}
               </div>
             ))}
           </div>
+
+          {/* Free プランの詳細注意書き */}
+          <div className="mt-8 bg-white border border-gray-200 rounded-xl px-6 py-5">
+            <p className="text-sm font-semibold text-gray-700 mb-2">フリープランについて</p>
+            <ul className="space-y-1.5 text-sm text-gray-600 leading-relaxed">
+              <li>・生成した契約書は、商用利用・実務利用はできません。</li>
+              <li>・書類生成は累計3件までご利用いただけます。</li>
+              <li>・過度な連続利用が見られた場合、一時的に利用を制限することがあります。</li>
+            </ul>
+          </div>
+
           <div className="mt-10 text-center">
             <Link
               href="/auth/signup"
@@ -191,7 +247,15 @@ export default function TrainerDocsPage() {
               無料アカウントを作成
               <ArrowRight size={20} />
             </Link>
+            <p className="text-sm text-gray-400 mt-3">クレジットカード不要・無料プランあり</p>
           </div>
+        </div>
+      </section>
+
+      {/* Legal notice */}
+      <section className="py-8 px-4">
+        <div className="max-w-5xl mx-auto">
+          <LegalNotice />
         </div>
       </section>
 

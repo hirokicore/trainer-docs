@@ -101,10 +101,9 @@ export default function FeedbackPage() {
             一緒に育ててもらえませんか？
           </h1>
           <p className="text-lg text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            パーソナルトレーナーさんや、個人でサービスを提供している方へ。
+            サービス改善のためのご意見・ご要望をお待ちしています。
             <br />
-            実際に使ってみた感想や「こういう契約書が作りたい」など、
-            気軽に教えてください。
+            不具合のご報告や、欲しい機能など、何でもお気軽にお知らせください。
           </p>
           <a
             href="#feedback-form"
@@ -172,11 +171,19 @@ export default function FeedbackPage() {
       {/* Feedback Form */}
       <section id="feedback-form" className="bg-gray-50 py-20 px-4">
         <div className="max-w-xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">ご意見・ご要望フォーム</h2>
-            <p className="text-gray-500">
-              気軽に送ってください。内容は必ず目を通します。
-            </p>
+          <div className="mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">ご意見・ご要望フォーム</h2>
+            <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 text-sm text-gray-700 leading-relaxed space-y-3">
+              <p className="font-medium text-gray-900">TrainerDocsに関するご意見・ご要望をお聞かせください。</p>
+              <ul className="space-y-1.5 text-gray-600">
+                <li>・「ここが分かりにくい」「こういう機能が欲しい」など</li>
+                <li>・不具合の報告や画面表示の乱れ など</li>
+              </ul>
+              <p className="text-gray-500 text-xs">
+                いただいた内容は、今後の改善の参考にさせていただきます。
+                個別の回答が必要な場合は、返信用メールアドレスのご入力もお願いします。
+              </p>
+            </div>
           </div>
 
           {submitted ? (

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Zap, X } from 'lucide-react';
+import { STANDARD_PLAN_PRICE } from '@/types';
 
 export default function SubscriptionBanner({ documentCount }: { documentCount: number }) {
   const [dismissed, setDismissed] = useState(false);
@@ -19,7 +20,7 @@ export default function SubscriptionBanner({ documentCount }: { documentCount: n
           フリープランをご利用中 — 残り{remaining}件無料で生成できます
         </p>
         <p className="text-brand-600 text-xs mt-1">
-          プロプランにアップグレードすると無制限で書類を生成できます（¥2,980/月）
+          有料プランにアップグレードすると商用利用・無制限生成が可能になります（¥{STANDARD_PLAN_PRICE.toLocaleString('ja-JP')}〜/月・税込）
         </p>
         <a
           href="/api/stripe/checkout"

@@ -39,7 +39,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/monitors" className="hover:text-white transition-colors">
-                  モニター募集
+                  ご意見・ご要望
                 </Link>
               </li>
             </ul>
