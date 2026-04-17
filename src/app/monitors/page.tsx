@@ -2,60 +2,48 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   CheckCircle,
-  Gift,
-  Users,
-  Star,
+  MessageSquare,
+  Lightbulb,
   ArrowRight,
-  FileText,
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-const benefits = [
+const feedbackItems = [
   {
-    icon: Gift,
-    title: 'プロプラン相当を無料で利用',
+    icon: MessageSquare,
+    title: 'こんな契約書が欲しい',
     description:
-      'ご利用中、書類生成無制限・クラウド保存など、すべてのプロ機能を無償で使えます。',
+      '「初回体験 → 継続コースへの切り替え時」「オンライン指導のキャンセルポリシー」など、実際の場面を教えてください。',
   },
   {
-    icon: Star,
-    title: 'サービス改善に参加',
+    icon: Lightbulb,
+    title: '困っていること・不安なこと',
     description:
-      'フィードバックをもとに機能追加・改善を優先的に行います。実際に使う現場の声を大切にしています。',
+      'トラブル対応に迷った経験や、契約書まわりで不安に感じることがあれば、気軽に教えてもらえると助かります。',
   },
   {
-    icon: Users,
-    title: '少人数の限定募集',
+    icon: CheckCircle,
+    title: '使ってみた感想',
     description:
-      '初回は10名程度の少人数で募集。一人ひとりのフィードバックを丁寧にサービスへ反映します。',
+      '「ここが使いやすかった」「この部分が分かりづらかった」どちらも歓迎です。開発の参考にします。',
   },
 ];
 
-const conditions = [
-  '現役のパーソナルトレーナー（資格の有無は問いません）',
-  '実際に使ってみた感想をお送りいただける方',
-  'TrainerDocs を実際の業務で試してみる意欲のある方',
+const usageOptions = [
+  { value: '', label: '選択してください（任意）' },
+  { value: 'not_used', label: 'まだ使っていない' },
+  { value: 'tried', label: '少し触ってみた' },
+  { value: 'in_use', label: '実務で使っている' },
 ];
 
-const activityOptions = [
-  { value: '', label: '選択してください' },
-  { value: 'gym', label: 'フィットネスジム・スタジオ勤務' },
-  { value: 'freelance', label: 'フリーランス（個人宅・貸しスタジオ）' },
-  { value: 'online', label: 'オンラインパーソナルトレーニング' },
-  { value: 'both', label: 'オフライン＋オンライン両方' },
-  { value: 'other', label: 'その他' },
-];
-
-export default function MonitorsPage() {
+export default function FeedbackPage() {
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    activity_status: '',
     message: '',
+    contact: '',
+    usage_status: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -72,8 +60,8 @@ export default function MonitorsPage() {
     e.preventDefault();
     setError('');
 
-    if (!form.name.trim() || !form.email.trim() || !form.activity_status || !form.message.trim()) {
-      setError('すべての項目を入力してください');
+    if (!form.message.trim()) {
+      setError('ご意見・ご要望を入力してください');
       return;
     }
 
@@ -104,134 +92,101 @@ export default function MonitorsPage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 text-white py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block bg-yellow-400 text-gray-900 text-sm font-bold px-4 py-1.5 rounded-full mb-6">
-            モニター募集中 — 先着10名限定
+          <span className="inline-block bg-brand-200 text-brand-900 text-sm font-bold px-4 py-1.5 rounded-full mb-6">
+            ご意見・ご要望
           </span>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-            プロプランを
-            <span className="text-yellow-300">無料</span>で体験
+            TrainerDocsを、
             <br />
-            モニタートレーナー募集
+            一緒に育ててもらえませんか？
           </h1>
           <p className="text-lg text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            TrainerDocs をより良いサービスにするために、現役パーソナルトレーナーの方に
-            サービスを実際に試して、感想をお送りいただける方を募集しています。
+            パーソナルトレーナーさんや、個人でサービスを提供している方へ。
+            <br />
+            実際に使ってみた感想や「こういう契約書が作りたい」など、
+            気軽に教えてください。
           </p>
           <a
-            href="#apply"
-            className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold text-lg px-8 py-4 rounded-xl transition-colors shadow-lg"
+            href="#feedback-form"
+            className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-brand-700 font-bold text-lg px-8 py-4 rounded-xl transition-colors shadow-lg"
           >
-            今すぐ応募する
+            意見を送る
             <ArrowRight size={20} />
           </a>
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* What we'd like to hear */}
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">モニター特典</h2>
-            <p className="text-gray-500 text-lg">
-              ご協力いただいた方には、以下の特典をご用意しています。
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              こんなことを教えてもらえると助かります
+            </h2>
+            <p className="text-gray-500 text-base max-w-xl mx-auto">
+              ひとりで開発しているので、現場の声がとても参考になります。
+              1行だけでも、思いついたことをそのまま書いてもらえれば大丈夫です。
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {benefits.map((b) => (
+            {feedbackItems.map((item) => (
               <div
-                key={b.title}
+                key={item.title}
                 className="flex flex-col gap-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <b.icon className="text-brand-600" size={24} />
+                  <item.icon className="text-brand-600" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{b.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{b.description}</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{item.description}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Pro plan details */}
-          <div className="mt-12 bg-brand-50 rounded-2xl p-8 border border-brand-100">
-            <div className="flex items-center gap-3 mb-6">
-              <FileText className="text-brand-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-900">プロプランに含まれる機能</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* What to write guide */}
+          <div className="mt-12 bg-gray-50 rounded-2xl p-8 border border-gray-100">
+            <h3 className="text-base font-semibold text-gray-800 mb-4">書いてみてほしいこと（全部じゃなくても大丈夫）</h3>
+            <ul className="space-y-3">
               {[
-                '書類生成 無制限',
-                '7種類の書類対応（委託契約書・同意書・確認書など）',
-                'PDFダウンロード',
-                '過去書類のクラウド保存',
-                'カスタムテンプレート（近日公開）',
-              ].map((f) => (
-                <div key={f} className="flex items-center gap-2 text-sm text-gray-700">
-                  <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
-                  {f}
-                </div>
+                'こんなタイミングで契約書を使いたい（例：初回体験 → 2ヶ月コースへの切り替え）',
+                'いま困っていること、不安に感じていること',
+                '実際に使ってみた感想（良かった点・気になった点）',
+                '欲しい機能やフォーマット',
+                '「これがあったら現場で役立つ」というアイデア',
+              ].map((text) => (
+                <li key={text} className="flex items-start gap-3 text-gray-600 text-sm">
+                  <CheckCircle size={16} className="text-brand-400 flex-shrink-0 mt-0.5" />
+                  {text}
+                </li>
               ))}
-            </div>
-            <p className="mt-6 text-sm text-brand-700 font-medium">
-              通常 ¥2,980/月 のプロプランが、1ヶ月間無料でご利用いただけます。
+            </ul>
+            <p className="mt-5 text-sm text-brand-700 font-medium">
+              すべてを書かなくても、1行だけでも大歓迎です。
             </p>
-          </div>
-
-          {/* Screenshot */}
-          <div className="mt-12">
-            <p className="text-center text-sm font-medium text-gray-400 mb-4 tracking-wide uppercase">
-              実際の画面イメージ
-            </p>
-            <div className="rounded-2xl overflow-hidden shadow-xl shadow-gray-200 border border-gray-100">
-              <Image
-                src="/screenshot-document.png"
-                alt="TrainerDocs 契約書生成画面"
-                width={960}
-                height={540}
-                className="w-full h-auto block"
-              />
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Conditions */}
-      <section className="bg-gray-50 py-20 px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">応募条件</h2>
-            <p className="text-gray-500">以下の条件に当てはまる方のご応募をお待ちしています。</p>
-          </div>
-          <ul className="space-y-4">
-            {conditions.map((c) => (
-              <li key={c} className="flex items-start gap-3 text-gray-700">
-                <CheckCircle size={20} className="text-brand-600 flex-shrink-0 mt-0.5" />
-                <span>{c}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* Application Form */}
-      <section id="apply" className="py-20 px-4">
+      {/* Feedback Form */}
+      <section id="feedback-form" className="bg-gray-50 py-20 px-4">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">応募フォーム</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">ご意見・ご要望フォーム</h2>
             <p className="text-gray-500">
-              内容を確認の上、数日以内にメールでご連絡いたします。
+              気軽に送ってください。内容は必ず目を通します。
             </p>
           </div>
 
           {submitted ? (
             <div className="bg-green-50 border border-green-200 rounded-2xl p-10 text-center">
               <CheckCircle className="text-green-500 mx-auto mb-4" size={48} />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">応募を受け付けました</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">送ってくれてありがとうございます</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                ご応募ありがとうございます。
+                いただいた内容は必ず目を通し、優先度を見ながら機能改善に反映していきます。
                 <br />
-                内容を確認の上、数日以内にご登録のメールアドレスへご連絡いたします。
+                すべてに返信はできないことがありますが、どんな意見もちゃんと届いています。
               </p>
               <Link
                 href="/"
@@ -246,68 +201,62 @@ export default function MonitorsPage() {
               onSubmit={handleSubmit}
               className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm space-y-6"
             >
+              {/* Main feedback */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  お名前 <span className="text-red-500">*</span>
+                  ご意見・ご要望 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
+                <textarea
+                  name="message"
+                  value={form.message}
                   onChange={handleChange}
-                  placeholder="山田 太郎"
+                  placeholder={'例：初回体験から2ヶ月コースに切り替えるときの契約書を増やしてほしい\n例：オンライン指導のキャンセルポリシーをどう書けばいいか分からない\n例：使ってみたけど項目が多すぎて迷った'}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
+                  rows={6}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition resize-none"
                 />
+                <p className="mt-1.5 text-xs text-gray-400">
+                  思いついたことをそのまま書いてもらえれば大丈夫です。
+                </p>
               </div>
 
+              {/* Usage status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  メールアドレス <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="trainer@example.com"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  現在の活動状況 <span className="text-red-500">*</span>
+                  TrainerDocs の利用状況
+                  <span className="ml-1.5 text-xs text-gray-400 font-normal">任意</span>
                 </label>
                 <select
-                  name="activity_status"
-                  value={form.activity_status}
+                  name="usage_status"
+                  value={form.usage_status}
                   onChange={handleChange}
-                  required
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition bg-white"
                 >
-                  {activityOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value} disabled={opt.value === ''}>
+                  {usageOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
                   ))}
                 </select>
               </div>
 
+              {/* Contact */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  応募メッセージ <span className="text-red-500">*</span>
+                  連絡先（メール or X アカウント）
+                  <span className="ml-1.5 text-xs text-gray-400 font-normal">任意</span>
                 </label>
-                <textarea
-                  name="message"
-                  value={form.message}
+                <input
+                  type="text"
+                  name="contact"
+                  value={form.contact}
                   onChange={handleChange}
-                  placeholder="現在の業務での課題や、TrainerDocsに期待することを教えてください（例：契約書作成に時間がかかっている、統一したフォーマットがほしい など）"
-                  required
-                  rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition resize-none"
+                  placeholder="trainer@example.com または @your_x_handle"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
                 />
+                <p className="mt-1.5 text-xs text-gray-400">
+                  返信が必要な方だけ入力してください。入力しなくてもフィードバックは届きます。
+                </p>
               </div>
 
               {error && (
@@ -328,14 +277,14 @@ export default function MonitorsPage() {
                   </>
                 ) : (
                   <>
-                    応募する
+                    送る
                     <ArrowRight size={18} />
                   </>
                 )}
               </button>
 
               <p className="text-xs text-gray-400 text-center leading-relaxed">
-                ご入力いただいた情報は、モニター選考およびご連絡のみに使用します。
+                ご入力いただいた情報は、サービス改善のためにのみ使用します。
                 <br />
                 第三者への提供は行いません。
               </p>
