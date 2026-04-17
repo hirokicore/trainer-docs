@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateDocument } from '@/lib/gemini';
+import { generateDocument, getGenerationEngine } from '@/lib/gemini';
+import { saveGenerationLog } from '@/lib/generation-log';
 import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, type TrainerFormData } from '@/types';
 
 export const runtime = 'edge';
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
+    // 未認証は user_id がないためログ対象外
     return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
   }
 
@@ -30,6 +32,7 @@ export async function POST(request: NextRequest) {
   const documentCount = count ?? 0;
 
   if (!isSubscribed && documentCount >= 3) {
+    // 利用上限超過はテンプレート選択前のため、ここではログしない
     return NextResponse.json(
       { error: 'フリープランの生成上限（3件）に達しました。プロプランにアップグレードしてください。' },
       { status: 403 }
@@ -40,18 +43,37 @@ export async function POST(request: NextRequest) {
   try {
     formData = await request.json();
   } catch {
+    // リクエストパース失敗は書類種別が不明なためログしない
     return NextResponse.json({ error: 'リクエストデータが不正です' }, { status: 400 });
   }
 
-  // Proプラン専用テンプレートへのアクセスをFreeユーザーから保護
-  if (!isSubscribed && PRO_ONLY_DOCUMENT_TYPES.has(formData.documentType)) {
+  // ── ここから document_type が確定したので、以降の全パスでログを記録する ──
+
+  const isProTemplate = PRO_ONLY_DOCUMENT_TYPES.has(formData.documentType);
+  const engine = getGenerationEngine(formData.documentType);
+  const start = Date.now();
+
+  // ── Proプラン専用テンプレートのアクセス制御 ──
+  if (!isSubscribed && isProTemplate) {
+    await saveGenerationLog(supabase, {
+      user_id: user.id,
+      document_type: formData.documentType,
+      template_id: formData.documentType,
+      is_subscribed: isSubscribed,
+      is_pro_template: isProTemplate,
+      status: 'error',
+      error_code: 'FORBIDDEN_PRO_TEMPLATE',
+      duration_ms: Date.now() - start,
+      engine,
+      request_origin: 'web',
+    });
     return NextResponse.json(
       { error: 'このテンプレートはProプラン専用です。アップグレードしてご利用ください。' },
       { status: 403 }
     );
   }
 
-  // バリデーション
+  // ── バリデーション ──
   const required: (keyof TrainerFormData)[] = [
     'trainerName', 'businessName', 'address', 'phone', 'email',
     'clientName', 'contractStartDate', 'contractEndDate',
@@ -60,12 +82,15 @@ export async function POST(request: NextRequest) {
 
   for (const field of required) {
     if (!formData[field]) {
+      // 入力不足はバリデーションエラー。生成を試みていないためログしない。
       return NextResponse.json({ error: `${field} は必須項目です` }, { status: 400 });
     }
   }
 
+  // ── 生成処理 ──
   try {
     const content = await generateDocument(formData);
+    const durationMs = Date.now() - start;
 
     const title = `${DOCUMENT_TYPE_LABELS[formData.documentType]}（${formData.clientName}）`;
 
@@ -83,9 +108,47 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
+    // 成功ログ（ログ失敗はレスポンスに影響しない）
+    await saveGenerationLog(supabase, {
+      user_id: user.id,
+      document_type: formData.documentType,
+      template_id: formData.documentType,
+      is_subscribed: isSubscribed,
+      is_pro_template: isProTemplate,
+      status: 'success',
+      duration_ms: durationMs,
+      engine,
+      request_origin: 'web',
+    });
+
     return NextResponse.json({ id: data.id });
   } catch (err: unknown) {
     console.error('Document generation error:', err);
+
+    // Gemini API エラーの判定（503 / 429 / API キーエラーなど）
+    const errMsg = err instanceof Error ? err.message : '';
+    const isGeminiError =
+      errMsg.includes('503') ||
+      errMsg.includes('429') ||
+      errMsg.includes('GOOGLE') ||
+      errMsg.includes('GoogleGenerativeAI') ||
+      (typeof err === 'object' && err !== null && 'status' in err &&
+        ((err as { status: number }).status === 503 || (err as { status: number }).status === 429));
+
+    // 失敗ログ（ログ失敗はレスポンスに影響しない）
+    await saveGenerationLog(supabase, {
+      user_id: user.id,
+      document_type: formData.documentType,
+      template_id: formData.documentType,
+      is_subscribed: isSubscribed,
+      is_pro_template: isProTemplate,
+      status: 'error',
+      error_code: isGeminiError ? 'GEMINI_ERROR' : 'UNKNOWN_ERROR',
+      duration_ms: Date.now() - start,
+      engine,
+      request_origin: 'web',
+    });
+
     const message = err instanceof Error ? err.message : '書類の生成に失敗しました';
     return NextResponse.json({ error: message }, { status: 500 });
   }

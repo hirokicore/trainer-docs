@@ -63,6 +63,30 @@ export interface Document {
   updated_at: string;
 }
 
+// ──────────────────────────────────────────────
+// ドキュメント生成ログ
+// ──────────────────────────────────────────────
+
+/** 生成失敗時のエラー分類コード */
+export type GenerationErrorCode =
+  | 'FORBIDDEN_PRO_TEMPLATE' // FreeユーザーがProテンプレートを要求
+  | 'GEMINI_ERROR'           // Gemini API エラー（503 / 429 など）
+  | 'UNKNOWN_ERROR';         // その他
+
+/** document_generations テーブルへの INSERT 用型 */
+export interface DocumentGenerationLog {
+  user_id: string;
+  document_type: string;
+  template_id: string;
+  is_subscribed: boolean;
+  is_pro_template: boolean;
+  status: 'success' | 'error';
+  error_code?: GenerationErrorCode | null;
+  duration_ms?: number | null;
+  engine?: 'gemini' | 'template_only' | null;
+  request_origin?: 'web' | 'api' | 'admin' | null;
+}
+
 export interface Profile {
   id: string;
   email: string;

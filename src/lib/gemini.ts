@@ -64,6 +64,14 @@ const DOCUMENT_SPECIFIC_INSTRUCTIONS: Partial<Record<DocumentType, string>> = {
 
 const MAX_RETRIES = 3;
 
+/**
+ * 書類タイプに対して実際に使われる生成エンジンを返す。
+ * ログの engine フィールドへの記録に使用する。
+ */
+export function getGenerationEngine(documentType: DocumentType): 'gemini' | 'template_only' {
+  return STATIC_TEMPLATE_MAP[documentType] ? 'template_only' : 'gemini';
+}
+
 export async function generateDocument(formData: TrainerFormData): Promise<string> {
   // Pro版など静的テンプレートが登録されている場合は Gemini を呼ばずに差し込み生成
   const staticTemplate = STATIC_TEMPLATE_MAP[formData.documentType];
