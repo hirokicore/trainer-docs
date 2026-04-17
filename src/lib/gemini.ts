@@ -1,9 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TrainerFormData, DOCUMENT_TYPE_LABELS, DocumentType } from '@/types';
+import { applyTemplate, PRO_TRAINING_CONTRACT_V1_TEMPLATE } from '@/lib/templates';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const DOCUMENT_SPECIFIC_INSTRUCTIONS: Record<DocumentType, string> = {
+/** Pro版など静的テンプレートを使う書類タイプのマップ */
+const STATIC_TEMPLATE_MAP: Partial<Record<DocumentType, string>> = {
+  pro_training_contract_v1: PRO_TRAINING_CONTRACT_V1_TEMPLATE,
+};
+
+/** Gemini で動的生成する書類タイプの固有指示 */
+const DOCUMENT_SPECIFIC_INSTRUCTIONS: Partial<Record<DocumentType, string>> = {
   training_contract: `
 - 委託業務の範囲（指導内容・場所・頻度）を明記すること
 - 料金・支払条件・遅延損害金について記載すること
@@ -58,10 +65,16 @@ const DOCUMENT_SPECIFIC_INSTRUCTIONS: Record<DocumentType, string> = {
 const MAX_RETRIES = 3;
 
 export async function generateDocument(formData: TrainerFormData): Promise<string> {
+  // Pro版など静的テンプレートが登録されている場合は Gemini を呼ばずに差し込み生成
+  const staticTemplate = STATIC_TEMPLATE_MAP[formData.documentType];
+  if (staticTemplate) {
+    return applyTemplate(staticTemplate, formData);
+  }
+
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const documentLabel = DOCUMENT_TYPE_LABELS[formData.documentType];
-  const specificInstructions = DOCUMENT_SPECIFIC_INSTRUCTIONS[formData.documentType];
+  const specificInstructions = DOCUMENT_SPECIFIC_INSTRUCTIONS[formData.documentType] ?? '';
 
   const prompt = `
 あなたはパーソナルトレーナー向けの法的書類作成の専門家です。

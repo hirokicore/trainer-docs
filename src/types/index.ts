@@ -1,5 +1,6 @@
 export type DocumentType =
   | 'training_contract'
+  | 'pro_training_contract_v1'
   | 'health_check'
   | 'liability_waiver'
   | 'membership_form'
@@ -9,6 +10,7 @@ export type DocumentType =
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   training_contract: 'トレーニング委託契約書',
+  pro_training_contract_v1: 'トレーニング委託契約書（Pro・章立て版）',
   health_check: '健康状態確認書',
   liability_waiver: '免責同意書',
   membership_form: '入会申込書',
@@ -16,6 +18,11 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   mid_cancel_agreement: '途中解約・クーリングオフ同意書',
   effect_disclaimer: '効果保証なし同意書',
 };
+
+/** Proプラン専用の書類タイプ。Freeユーザーには選択肢を非表示・APIでも弾く。 */
+export const PRO_ONLY_DOCUMENT_TYPES = new Set<DocumentType>([
+  'pro_training_contract_v1',
+]);
 
 export interface TrainerFormData {
   // トレーナー情報

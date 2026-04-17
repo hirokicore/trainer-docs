@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateDocument } from '@/lib/gemini';
-import { DOCUMENT_TYPE_LABELS, type TrainerFormData } from '@/types';
+import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, type TrainerFormData } from '@/types';
 
 export const runtime = 'edge';
 
@@ -41,6 +41,14 @@ export async function POST(request: NextRequest) {
     formData = await request.json();
   } catch {
     return NextResponse.json({ error: 'リクエストデータが不正です' }, { status: 400 });
+  }
+
+  // Proプラン専用テンプレートへのアクセスをFreeユーザーから保護
+  if (!isSubscribed && PRO_ONLY_DOCUMENT_TYPES.has(formData.documentType)) {
+    return NextResponse.json(
+      { error: 'このテンプレートはProプラン専用です。アップグレードしてご利用ください。' },
+      { status: 403 }
+    );
   }
 
   // バリデーション

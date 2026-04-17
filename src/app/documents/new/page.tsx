@@ -53,7 +53,7 @@ export default async function NewDocumentPage() {
         </p>
       </div>
 
-      <TrainerForm />
+      <TrainerForm isSubscribed={isSubscribed} />
     </div>
   );
 }
