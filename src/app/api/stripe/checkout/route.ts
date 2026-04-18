@@ -79,17 +79,59 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, redirectTo: url });
     }
     return NextResponse.redirect(url);
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error('[checkout] Stripe checkout error:', errorMessage);
+  } catch (err: unknown) {
+    // Stripe SDK エラーは StripeError を継承しており message/type/code/raw を持つ
+    const stripeErr = err as {
+      message?: string;
+      type?: string;
+      code?: string;
+      statusCode?: number;
+      raw?: { message?: string; type?: string; code?: string; decline_code?: string; param?: string };
+    };
+
+    const errorMessage  = stripeErr.message  ?? String(err);
+    const errorType     = stripeErr.type     ?? null;
+    const errorCode     = stripeErr.code     ?? null;
+    const errorStatus   = stripeErr.statusCode ?? null;
+    const rawMessage    = stripeErr.raw?.message    ?? null;
+    const rawType       = stripeErr.raw?.type       ?? null;
+    const rawCode       = stripeErr.raw?.code       ?? null;
+    const rawDecline    = stripeErr.raw?.decline_code ?? null;
+    const rawParam      = stripeErr.raw?.param      ?? null;
+
+    console.error('[checkout] Stripe checkout error ----');
+    console.error('[checkout]   message    :', errorMessage);
+    console.error('[checkout]   type       :', errorType);
+    console.error('[checkout]   code       :', errorCode);
+    console.error('[checkout]   statusCode :', errorStatus);
+    console.error('[checkout]   raw.message:', rawMessage);
+    console.error('[checkout]   raw.type   :', rawType);
+    console.error('[checkout]   raw.code   :', rawCode);
+    console.error('[checkout]   raw.decline:', rawDecline);
+    console.error('[checkout]   raw.param  :', rawParam);
+    console.error('[checkout] ---------------------------');
+
     if (debugMode) {
-      return NextResponse.json({
-        error: errorMessage,
-        plan,
-        priceId,
-        secretKeyHead,
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          ok: false,
+          message:    errorMessage,
+          type:       errorType,
+          code:       errorCode,
+          statusCode: errorStatus,
+          raw: {
+            message:      rawMessage,
+            type:         rawType,
+            code:         rawCode,
+            decline_code: rawDecline,
+            param:        rawParam,
+          },
+          context: { plan, priceId, secretKeyHead },
+        },
+        { status: 500 }
+      );
     }
+
     return NextResponse.redirect(
       new URL(`/dashboard?error=checkout&message=${encodeURIComponent(errorMessage)}`, request.url)
     );
