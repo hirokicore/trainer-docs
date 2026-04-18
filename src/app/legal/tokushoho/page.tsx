@@ -1,10 +1,36 @@
 import type { Metadata } from 'next';
+import { getTokushohoSettings } from '@/lib/tokushohoSettingsRepo';
+
+// Supabase 実装に差し替えたとき、古いビルドキャッシュが表示されないよう動的レンダリングを強制する
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: '特定商取引法に基づく表記 — TrainerDocs',
 };
 
-export default function TokushohoPage() {
+export default async function TokushohoPage() {
+  const s = await getTokushohoSettings();
+
+  // 未設定時のガード
+  if (!s) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-5">
+        <div className="max-w-md text-center">
+          <p className="text-gray-500 text-sm leading-relaxed">
+            特定商取引法に基づく表記の事業者情報がまだ設定されていません。
+            <br />
+            <a
+              href="/admin/tokushoho-setup"
+              className="mt-3 inline-block text-brand-600 underline underline-offset-2"
+            >
+              管理画面から登録してください
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-5 py-16">
@@ -18,7 +44,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               事業者名
             </dt>
-            <dd className="text-gray-900">{`{{businessName}}`}</dd>
+            <dd className="text-gray-900">{s.businessName}</dd>
           </div>
 
           {/* 運営責任者 */}
@@ -26,7 +52,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               運営責任者
             </dt>
-            <dd className="text-gray-900">{`{{representativeName}}`}</dd>
+            <dd className="text-gray-900">{s.representativeName}</dd>
           </div>
 
           {/* 所在地 */}
@@ -34,7 +60,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               所在地
             </dt>
-            <dd className="text-gray-900">{`{{businessAddress}}`}</dd>
+            <dd className="text-gray-900 whitespace-pre-wrap">{s.businessAddress}</dd>
           </div>
 
           {/* 電話番号 */}
@@ -43,9 +69,9 @@ export default function TokushohoPage() {
               電話番号
             </dt>
             <dd className="text-gray-900">
-              {`{{phoneNumber}}`}
+              {s.phoneNumber}
               <span className="text-gray-500 text-sm ml-2">
-                ※お問い合わせはメールにて優先的に受け付けております。電話でのお問い合わせは{`{{phoneAvailableHours}}`}に対応しております。
+                ※お問い合わせはメールにて優先的に受け付けております。電話でのお問い合わせは{s.phoneAvailableHours}に対応しております。
               </span>
             </dd>
           </div>
@@ -55,7 +81,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               メールアドレス
             </dt>
-            <dd className="text-gray-900">{`{{email}}`}</dd>
+            <dd className="text-gray-900">{s.email}</dd>
           </div>
 
           {/* 販売価格 */}
@@ -183,7 +209,7 @@ export default function TokushohoPage() {
               <br />
               ただし、当サービス側の重大な不具合等によりサービスが提供できない場合は、個別にご相談のうえ対応いたします。
               <br />
-              ご不明な点は {`{{email}}`} までお問い合わせください。
+              ご不明な点は {s.email} までお問い合わせください。
             </dd>
           </div>
 
@@ -201,14 +227,3 @@ export default function TokushohoPage() {
     </div>
   );
 }
-
-// =============================================================
-// TODO: 以下のプレースホルダを実データに置き換える
-// =============================================================
-// - {{businessName}}        : 事業者名（屋号または法人名）
-// - {{representativeName}}  : 運営責任者の氏名（フルネーム）
-// - {{businessAddress}}     : 事業所の住所（都道府県から番地まで）
-// - {{phoneNumber}}         : 電話番号（例: 03-XXXX-XXXX）
-// - {{phoneAvailableHours}} : 電話対応時間（例: 平日10:00〜18:00）
-// - {{email}}               : お問い合わせ用メールアドレス（2か所に出現）
-// =============================================================
