@@ -1,8 +1,11 @@
 import Stripe from 'stripe';
 
+// Cloudflare Pages / Workers は Node.js HTTP が使えないため fetch ベースの HTTP クライアントを指定する。
+// Stripe SDK v16+ でサポート: https://github.com/stripe/stripe-node#usage-with-cloudflare-workers
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
   typescript: true,
+  httpClient: Stripe.createFetchHttpClient(),
 });
 
 /**
