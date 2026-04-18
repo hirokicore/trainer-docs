@@ -8,11 +8,12 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 /**
  * Stripe Checkout セッションを生成して URL を返す。
  *
- * @param priceId - プランの Stripe Price ID。
- *   省略した場合は STRIPE_PRO_PRICE_ID → NEXT_PUBLIC_STRIPE_PRICE_ID の優先順でフォールバック。
- *   Standard プランは STRIPE_STANDARD_PRICE_ID を設定すること（未設定時は Pro 価格 ID で代用）。
- *   TODO: Stripe ダッシュボードで Standard / Pro それぞれの Price を作成し、
- *         STRIPE_STANDARD_PRICE_ID と STRIPE_PRO_PRICE_ID を .env.local に追加する。
+ * @param priceId - 呼び出し元（checkout route）が解決した Stripe Price ID。
+ *   省略時は STRIPE_PRO_PRICE_ID → NEXT_PUBLIC_STRIPE_PRICE_ID（廃止予定）の順でフォールバック。
+ *
+ * Price ID の設定場所: .env.local
+ *   STRIPE_STANDARD_PRICE_ID=price_xxx  ← Standard プラン（月額 1,480円）
+ *   STRIPE_PRO_PRICE_ID=price_xxx       ← Pro プラン（月額 2,980円）
  */
 export async function createCheckoutSession(
   userId: string,
@@ -21,7 +22,8 @@ export async function createCheckoutSession(
   priceId?: string
 ): Promise<string> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
-  // priceId が渡されなければ Pro / 既存デフォルトへフォールバック
+  // priceId は checkout route が ?plan= から解決して渡す。
+  // 省略時は STRIPE_PRO_PRICE_ID → 廃止予定フォールバックの順。
   const resolvedPriceId =
     priceId ??
     process.env.STRIPE_PRO_PRICE_ID ??

@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
   // ?plan=standard | pro（省略時は pro へフォールバック）
   const plan = request.nextUrl.searchParams.get('plan') ?? 'pro';
 
-  // プランに対応する Stripe Price ID を解決する
-  // TODO: .env.local に STRIPE_STANDARD_PRICE_ID / STRIPE_PRO_PRICE_ID を追加する
-  //       （未設定の場合は既存の NEXT_PUBLIC_STRIPE_PRICE_ID で代用）
+  // プランに対応する Stripe Price ID を解決する。
+  // .env.local に STRIPE_STANDARD_PRICE_ID / STRIPE_PRO_PRICE_ID を設定すること。
+  // 未設定時は廃止予定の NEXT_PUBLIC_STRIPE_PRICE_ID へフォールバック。
   const priceId =
     plan === 'standard'
       ? (process.env.STRIPE_STANDARD_PRICE_ID ?? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!)
