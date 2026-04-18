@@ -1,36 +1,10 @@
 import type { Metadata } from 'next';
-import { getTokushohoSettings } from '@/lib/tokushohoSettingsRepo';
-
-// Supabase 実装に差し替えたとき、古いビルドキャッシュが表示されないよう動的レンダリングを強制する
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: '特定商取引法に基づく表記 — TrainerDocs',
 };
 
-export default async function TokushohoPage() {
-  const s = await getTokushohoSettings();
-
-  // 未設定時のガード
-  if (!s) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-5">
-        <div className="max-w-md text-center">
-          <p className="text-gray-500 text-sm leading-relaxed">
-            特定商取引法に基づく表記の事業者情報がまだ設定されていません。
-            <br />
-            <a
-              href="/admin/tokushoho-setup"
-              className="mt-3 inline-block text-brand-600 underline underline-offset-2"
-            >
-              管理画面から登録してください
-            </a>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+export default function TokushohoPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-5 py-16">
@@ -44,7 +18,7 @@ export default async function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               事業者名
             </dt>
-            <dd className="text-gray-900">{s.businessName}</dd>
+            <dd className="text-gray-900">（ここに事業者名を記載）</dd>
           </div>
 
           {/* 運営責任者 */}
@@ -52,7 +26,7 @@ export default async function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               運営責任者
             </dt>
-            <dd className="text-gray-900">{s.representativeName}</dd>
+            <dd className="text-gray-900">（ここに運営責任者名を記載）</dd>
           </div>
 
           {/* 所在地 */}
@@ -60,7 +34,7 @@ export default async function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               所在地
             </dt>
-            <dd className="text-gray-900 whitespace-pre-wrap">{s.businessAddress}</dd>
+            <dd className="text-gray-900">（ここに所在地を記載）</dd>
           </div>
 
           {/* 電話番号 */}
@@ -69,9 +43,9 @@ export default async function TokushohoPage() {
               電話番号
             </dt>
             <dd className="text-gray-900">
-              {s.phoneNumber}
+              （ここに電話番号または「請求があれば遅滞なく開示します」等の文言を記載）
               <span className="text-gray-500 text-sm ml-2">
-                ※お問い合わせはメールにて優先的に受け付けております。電話でのお問い合わせは{s.phoneAvailableHours}に対応しております。
+                ※お問い合わせはメールにて優先的に受け付けております。電話でのお問い合わせは（ここに対応時間を記載）に対応しております。
               </span>
             </dd>
           </div>
@@ -81,7 +55,7 @@ export default async function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               メールアドレス
             </dt>
-            <dd className="text-gray-900">{s.email}</dd>
+            <dd className="text-gray-900">（ここにメールアドレスを記載）</dd>
           </div>
 
           {/* 販売価格 */}
@@ -209,7 +183,7 @@ export default async function TokushohoPage() {
               <br />
               ただし、当サービス側の重大な不具合等によりサービスが提供できない場合は、個別にご相談のうえ対応いたします。
               <br />
-              ご不明な点は {s.email} までお問い合わせください。
+              ご不明な点は（ここにメールアドレスを記載）までお問い合わせください。
             </dd>
           </div>
 
