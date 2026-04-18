@@ -18,7 +18,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               事業者名
             </dt>
-            <dd className="text-gray-900">（ここに事業者名を記載）</dd>
+            <dd className="text-gray-900">TrainerDocs（大家 博輝）</dd>
           </div>
 
           {/* 運営責任者 */}
@@ -26,7 +26,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               運営責任者
             </dt>
-            <dd className="text-gray-900">（ここに運営責任者名を記載）</dd>
+            <dd className="text-gray-900">大家 博輝</dd>
           </div>
 
           {/* 所在地 */}
@@ -34,7 +34,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               所在地
             </dt>
-            <dd className="text-gray-900">（ここに所在地を記載）</dd>
+            <dd className="text-gray-900">〒510-0263 三重県鈴鹿市郡山町2074-6 (9-24-6)</dd>
           </div>
 
           {/* 電話番号 */}
@@ -43,9 +43,9 @@ export default function TokushohoPage() {
               電話番号
             </dt>
             <dd className="text-gray-900">
-              （ここに電話番号または「請求があれば遅滞なく開示します」等の文言を記載）
+              080-5121-9812
               <span className="text-gray-500 text-sm ml-2">
-                ※お問い合わせはメールにて優先的に受け付けております。電話でのお問い合わせは（ここに対応時間を記載）に対応しております。
+                ※お問い合わせはメールにて優先的に受け付けております。電話でのお問い合わせは平日 19:00〜21:00（土日・祝日・年末年始を除く）に対応しております。
               </span>
             </dd>
           </div>
@@ -55,7 +55,7 @@ export default function TokushohoPage() {
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               メールアドレス
             </dt>
-            <dd className="text-gray-900">（ここにメールアドレスを記載）</dd>
+            <dd className="text-gray-900">hiroki.oie.core@gmail.com</dd>
           </div>
 
           {/* 販売価格 */}
@@ -183,7 +183,7 @@ export default function TokushohoPage() {
               <br />
               ただし、当サービス側の重大な不具合等によりサービスが提供できない場合は、個別にご相談のうえ対応いたします。
               <br />
-              ご不明な点は（ここにメールアドレスを記載）までお問い合わせください。
+              ご不明な点はhiroki.oie.core@gmail.comまでお問い合わせください。
             </dd>
           </div>
 
