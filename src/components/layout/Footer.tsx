@@ -58,6 +58,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/legal/tokushoho" className="hover:text-white transition-colors">
+                  特定商取引法に基づく表記
+                </Link>
+              </li>
+              <li>
                 <a
                   href="mailto:support@trainer-docs.com"
                   className="hover:text-white transition-colors"
