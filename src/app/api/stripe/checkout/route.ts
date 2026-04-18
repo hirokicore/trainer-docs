@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createCheckoutSession } from '@/lib/stripe';
 
-export const runtime = 'edge';
+// Stripe SDK は Node.js ランタイムで実行する（Edge ではHTTPスタックの互換問題が起きる）
+export const maxDuration = 30;
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();

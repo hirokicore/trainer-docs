@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from 'next/link'; // 戻るボタン用（内部遷移）
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { STANDARD_PLAN_PRICE, PRO_PLAN_PRICE } from '@/types';
 
@@ -111,8 +111,8 @@ export default function UpgradePage({
               ))}
             </ul>
 
-            {/* 選択ボタン → Stripe Checkout へ */}
-            <Link
+            {/* 選択ボタン → Stripe Checkout へ（フルページ遷移で外部リダイレクトを正しく追う） */}
+            <a
               href={`/api/stripe/checkout?plan=${plan.id}`}
               className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-colors ${
                 plan.highlight
@@ -122,7 +122,7 @@ export default function UpgradePage({
             >
               {plan.name}を選択
               <ArrowRight size={16} />
-            </Link>
+            </a>
           </div>
         ))}
       </div>
