@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Zap, X } from 'lucide-react';
 import { STANDARD_PLAN_PRICE, FREE_TOTAL_LIMIT } from '@/types';
 
@@ -22,12 +23,12 @@ export default function SubscriptionBanner({ documentCount }: { documentCount: n
         <p className="text-brand-600 text-xs mt-1">
           有料プランにアップグレードすると商用利用・無制限生成が可能になります（¥{STANDARD_PLAN_PRICE.toLocaleString('ja-JP')}〜/月・税込）
         </p>
-        <a
-          href="/api/stripe/checkout"
+        <Link
+          href="/dashboard/upgrade"
           className="inline-block mt-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
         >
-          プロにアップグレード →
-        </a>
+          アップグレード →
+        </Link>
       </div>
       <button
         onClick={() => setDismissed(true)}

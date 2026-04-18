@@ -59,11 +59,11 @@ export default async function DashboardPage({
           </Link>
         ) : (
           <Link
-            href="/api/stripe/checkout"
+            href="/dashboard/upgrade"
             className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
             <CreditCard size={16} />
-            プロにアップグレード
+            アップグレード
           </Link>
         )}
       </div>
