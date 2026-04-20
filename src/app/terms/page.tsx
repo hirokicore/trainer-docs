@@ -17,7 +17,7 @@ export default function TermsPage() {
         <section className="mt-10 mb-8">
           <h2 className="text-base font-bold text-gray-900 mb-3">第1条（適用）</h2>
           <p className="text-gray-700 text-sm leading-relaxed">
-            本規約は、{'{{businessName}}'}（以下「当社」）が提供するTrainerDocs（以下「本サービス」）の利用に関する条件を定めるものです。本サービスをご利用いただくことで、本規約に同意したものとみなします。
+            本規約は、TrainerDocs（大家 博輝）（以下「当社」）が提供するTrainerDocs（以下「本サービス」）の利用に関する条件を定めるものです。本サービスをご利用いただくことで、本規約に同意したものとみなします。
           </p>
         </section>
 
@@ -181,16 +181,16 @@ export default function TermsPage() {
         <section className="mb-12">
           <h2 className="text-base font-bold text-gray-900 mb-3">第16条（準拠法および裁判管轄）</h2>
           <p className="text-gray-700 text-sm leading-relaxed">
-            本規約は日本法に準拠します。本サービスに関する一切の紛争については、{'{{courtLocation}}'}地方裁判所を第一審の専属的合意管轄裁判所とします。
+            本規約は日本法に準拠します。本サービスに関する一切の紛争については、その訴額に応じて、津地方裁判所または鈴鹿簡易裁判所を第一審の専属的合意管轄裁判所とします。
           </p>
         </section>
 
         {/* 制定日・お問い合わせ */}
         <div className="border-t border-gray-200 pt-6 text-sm text-gray-500 space-y-1">
-          <p>制定日：{'{{establishedDate}}'}</p>
-          <p>最終改定日：{'{{lastUpdatedDate}}'}</p>
-          <p className="mt-3">事業者名：{'{{businessName}}'}</p>
-          <p>お問い合わせ：{'{{email}}'}</p>
+          <p>制定日：2026年4月20日</p>
+          <p>最終改定日：2026年4月20日</p>
+          <p className="mt-3">事業者名：TrainerDocs（大家 博輝）</p>
+          <p>お問い合わせ：hiroki.oie.core@gmail.com</p>
         </div>
 
       </div>

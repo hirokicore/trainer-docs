@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         </h1>
 
         <p className="text-gray-700 text-sm leading-relaxed mt-8 mb-10">
-          {'{{businessName}}'}（以下「当社」）は、TrainerDocs（以下「本サービス」）をご利用いただくお客様の個人情報の取扱いについて、以下のとおりプライバシーポリシーを定めます。
+          TrainerDocs（大家 博輝）（以下「当社」）は、TrainerDocs（以下「本サービス」）をご利用いただくお客様の個人情報の取扱いについて、以下のとおりプライバシーポリシーを定めます。
         </p>
 
         {/* 1 */}
@@ -166,27 +166,27 @@ export default function PrivacyPage() {
           <dl className="text-sm text-gray-700 space-y-1.5">
             <div className="flex gap-2">
               <dt className="text-gray-500 shrink-0">事業者名</dt>
-              <dd>{'{{businessName}}'}</dd>
+              <dd>TrainerDocs（大家 博輝）</dd>
             </div>
             <div className="flex gap-2">
               <dt className="text-gray-500 shrink-0">運営責任者</dt>
-              <dd>{'{{representativeName}}'}</dd>
+              <dd>大家 博輝</dd>
             </div>
             <div className="flex gap-2">
               <dt className="text-gray-500 shrink-0">所在地</dt>
-              <dd>{'{{address}}'}</dd>
+              <dd>〒510-0263 三重県鈴鹿市郡山町2074-6 (9-24-6)</dd>
             </div>
             <div className="flex gap-2">
               <dt className="text-gray-500 shrink-0">メールアドレス</dt>
-              <dd>{'{{email}}'}</dd>
+              <dd>hiroki.oie.core@gmail.com</dd>
             </div>
           </dl>
         </section>
 
         {/* 制定日・改定日 */}
         <div className="border-t border-gray-200 pt-6 text-sm text-gray-500 space-y-1">
-          <p>制定日：{'{{establishedDate}}'}</p>
-          <p>最終改定日：{'{{lastUpdatedDate}}'}</p>
+          <p>制定日：2026年4月20日</p>
+          <p>最終改定日：2026年4月20日</p>
         </div>
 
       </div>
