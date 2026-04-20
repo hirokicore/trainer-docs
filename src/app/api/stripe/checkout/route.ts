@@ -7,6 +7,8 @@ export const maxDuration = 30;
 
 export async function GET(request: NextRequest) {
   const debugMode = request.nextUrl.searchParams.get('debug') === '1';
+  const rawPlan = request.nextUrl.searchParams.get('plan');
+  const plan = rawPlan === 'standard' || rawPlan === 'pro' ? rawPlan : 'pro';
 
   const supabase = await createClient();
   const {
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', '/api/stripe/checkout');
+    loginUrl.searchParams.set('redirect', `/api/stripe/checkout?plan=${plan}`);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -25,39 +27,42 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
     .single();
 
-  // ?plan=standard | pro（省略時は pro へフォールバック）
-  const plan = request.nextUrl.searchParams.get('plan') ?? 'pro';
+  if (rawPlan && rawPlan !== 'standard' && rawPlan !== 'pro') {
+    const reason = `不正なプラン指定です: ${rawPlan}`;
+    if (debugMode) {
+      return NextResponse.json({ error: reason, plan: rawPlan }, { status: 400 });
+    }
+    return NextResponse.redirect(
+      new URL(`/dashboard/upgrade?error=checkout&message=${encodeURIComponent(reason)}`, request.url)
+    );
+  }
 
   // プランに対応する Stripe Price ID を解決する
   const standardPriceId = process.env.STRIPE_STANDARD_PRICE_ID;
   const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
-  const legacyPriceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
   const secretKeyHead = process.env.STRIPE_SECRET_KEY
     ? process.env.STRIPE_SECRET_KEY.slice(0, 7) + '...'
     : 'MISSING';
 
-  const priceId =
-    plan === 'standard'
-      ? (standardPriceId ?? legacyPriceId)
-      : (proPriceId ?? legacyPriceId);
+  const priceId = plan === 'standard' ? standardPriceId : proPriceId;
 
   console.log('[checkout] plan:', plan);
   console.log('[checkout] STRIPE_STANDARD_PRICE_ID:', standardPriceId ?? 'MISSING');
   console.log('[checkout] STRIPE_PRO_PRICE_ID:', proPriceId ?? 'MISSING');
-  console.log('[checkout] NEXT_PUBLIC_STRIPE_PRICE_ID (legacy):', legacyPriceId ?? 'MISSING');
   console.log('[checkout] resolved priceId:', priceId ?? 'UNDEFINED');
   console.log('[checkout] STRIPE_SECRET_KEY head:', secretKeyHead);
   console.log('[checkout] userId:', user.id);
   console.log('[checkout] customerId:', profile?.stripe_customer_id ?? 'none');
 
   if (!priceId) {
-    const reason = 'priceId が解決できませんでした。Cloudflare Pages の環境変数に STRIPE_STANDARD_PRICE_ID / STRIPE_PRO_PRICE_ID を設定してください。';
+    const missingKey = plan === 'standard' ? 'STRIPE_STANDARD_PRICE_ID' : 'STRIPE_PRO_PRICE_ID';
+    const reason = `priceId が解決できませんでした。環境変数 ${missingKey} を設定してください。`;
     console.error('[checkout] FATAL:', reason);
     if (debugMode) {
-      return NextResponse.json({ error: reason, plan, standardPriceId, proPriceId, legacyPriceId }, { status: 500 });
+      return NextResponse.json({ error: reason, plan, standardPriceId, proPriceId }, { status: 500 });
     }
     return NextResponse.redirect(
-      new URL(`/dashboard?error=checkout&message=${encodeURIComponent(reason)}`, request.url)
+      new URL(`/dashboard/upgrade?error=checkout&message=${encodeURIComponent(reason)}`, request.url)
     );
   }
 
@@ -133,7 +138,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.redirect(
-      new URL(`/dashboard?error=checkout&message=${encodeURIComponent(errorMessage)}`, request.url)
+      new URL(`/dashboard/upgrade?error=checkout&message=${encodeURIComponent(errorMessage)}`, request.url)
     );
   }
 }
