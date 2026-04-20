@@ -23,7 +23,7 @@ export default async function NewDocumentPage() {
 
   // フリープランの上限チェック
   const [{ data: profile }, { count }] = await Promise.all([
-    supabase.from('profiles').select('subscription_status').eq('id', user.id).single(),
+    supabase.from('profiles').select('subscription_status, plan').eq('id', user.id).single(),
     supabase
       .from('documents')
       .select('id', { count: 'exact', head: true })
@@ -33,6 +33,7 @@ export default async function NewDocumentPage() {
   const isSubscribed =
     profile?.subscription_status === 'active' ||
     profile?.subscription_status === 'trialing';
+  const isPro = profile?.plan === 'pro';
   const documentCount = count ?? 0;
 
   if (!isSubscribed && documentCount >= FREE_TOTAL_LIMIT) {
@@ -55,7 +56,7 @@ export default async function NewDocumentPage() {
         </p>
       </div>
 
-      <TrainerForm isSubscribed={isSubscribed} />
+      <TrainerForm isSubscribed={isSubscribed} isPro={isPro} />
 
       <div className="mt-8">
         <LegalNotice />

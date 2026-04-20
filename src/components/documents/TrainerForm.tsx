@@ -59,7 +59,7 @@ const GENERATION_STEP_MESSAGES: Record<Exclude<GenerationStep, 0>, string> = {
   3: 'PDFを作成しています…',
 };
 
-export default function TrainerForm({ isSubscribed = false }: { isSubscribed?: boolean }) {
+export default function TrainerForm({ isSubscribed = false, isPro = false }: { isSubscribed?: boolean; isPro?: boolean }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
@@ -318,12 +318,11 @@ export default function TrainerForm({ isSubscribed = false }: { isSubscribed?: b
               </p>
               {(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][])
                 // Proプラン専用の種別はFreeユーザーには非表示
-                .filter(([value]) => isSubscribed || !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType))
+                .filter(([value]) => isPro || !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType))
                 .map(([value, label]) => {
                   const docType = value as DocumentType;
-                  const isPro = PRO_ONLY_DOCUMENT_TYPES.has(docType);
-                  // Proユーザー向けにラベルをオーバーライド（標準版 vs Pro版 を区別）
-                  const displayLabel = isSubscribed
+                  const isProDoc = PRO_ONLY_DOCUMENT_TYPES.has(docType);
+                  const displayLabel = isPro
                     ? (PRO_USER_LABEL_OVERRIDE[docType] ?? label)
                     : label;
                   const description = DOCUMENT_TYPE_DESCRIPTIONS[docType];
@@ -359,7 +358,7 @@ export default function TrainerForm({ isSubscribed = false }: { isSubscribed?: b
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-gray-900 text-sm">{displayLabel}</p>
-                          {isPro && (
+                          {isProDoc && (
                             <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white leading-none">
                               Pro
                             </span>

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   // サブスクリプション & 利用制限チェック
   const [{ data: profile }, { count }] = await Promise.all([
-    supabase.from('profiles').select('subscription_status').eq('id', user.id).single(),
+    supabase.from('profiles').select('subscription_status, plan').eq('id', user.id).single(),
     supabase
       .from('documents')
       .select('id', { count: 'exact', head: true })
@@ -55,8 +55,10 @@ export async function POST(request: NextRequest) {
   const engine = getGenerationEngine(formData.documentType);
   const start = Date.now();
 
+  const isPro = profile?.plan === 'pro';
+
   // ── Proプラン専用テンプレートのアクセス制御 ──
-  if (!isSubscribed && isProTemplate) {
+  if (!isPro && isProTemplate) {
     await saveGenerationLog(supabase, {
       user_id: user.id,
       document_type: formData.documentType,
