@@ -50,23 +50,34 @@ export default async function DashboardPage({
             ようこそ、{profile?.full_name || user?.email} さん
           </p>
         </div>
-        {canCreate ? (
-          <Link
-            href="/documents/new"
-            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            <PlusCircle size={16} />
-            書類を新規作成
-          </Link>
-        ) : (
-          <Link
-            href="/dashboard/upgrade"
-            className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            <CreditCard size={16} />
-            アップグレード
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {isSubscribed && (
+            <Link
+              href="/api/stripe/portal"
+              className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 transition-colors"
+            >
+              <CreditCard size={16} />
+              プランを管理
+            </Link>
+          )}
+          {canCreate ? (
+            <Link
+              href="/documents/new"
+              className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <PlusCircle size={16} />
+              書類を新規作成
+            </Link>
+          ) : (
+            <Link
+              href="/dashboard/upgrade"
+              className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <CreditCard size={16} />
+              アップグレード
+            </Link>
+          )}
+        </div>
       </div>
 
       {params.subscription === 'success' && (
