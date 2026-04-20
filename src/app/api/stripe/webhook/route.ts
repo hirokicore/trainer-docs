@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
           stripe_subscription_id: session.subscription as string,
           subscription_status: 'active',
           plan,
-          active: true,
         }).eq('id', userId).select();
         console.log('[webhook]   update data       :', JSON.stringify(data));
         console.log('[webhook]   update error      :', error ? JSON.stringify(error) : 'null');
@@ -88,7 +87,6 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabase.from('profiles').update({
           subscription_status: subscription.status as string,
           plan,
-          active: isActive,
         }).eq('stripe_subscription_id', subscription.id).select();
         console.log('[webhook]   update data       :', JSON.stringify(data));
         console.log('[webhook]   update error      :', error ? JSON.stringify(error) : 'null');
@@ -106,7 +104,6 @@ export async function POST(request: NextRequest) {
           subscription_status: 'inactive',
           stripe_subscription_id: null,
           plan: 'free',
-          active: false,
         }).eq('stripe_subscription_id', subscription.id).select();
         console.log('[webhook]   update data       :', JSON.stringify(data));
         console.log('[webhook]   update error      :', error ? JSON.stringify(error) : 'null');
@@ -124,7 +121,6 @@ export async function POST(request: NextRequest) {
           await supabase.from('profiles').update({
             subscription_status: 'inactive',
             plan: 'free',
-            active: false,
           }).eq('stripe_subscription_id', subscriptionId);
         }
         break;

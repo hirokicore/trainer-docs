@@ -21,7 +21,6 @@ export async function GET() {
     return NextResponse.json({ error: profileError.message, step: 'profile_fetch' }, { status: 500 });
   }
 
-  // stripe_customer_id が未保存の場合はメールで検索
   let customerId = profile?.stripe_customer_id as string | undefined;
   if (!customerId) {
     const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
@@ -44,7 +43,6 @@ export async function GET() {
     const { error: updateError } = await supabase.from('profiles').update({
       stripe_customer_id: customerId,
       plan: 'free',
-      active: false,
       subscription_status: 'inactive',
     }).eq('id', user.id);
 
@@ -65,7 +63,6 @@ export async function GET() {
     stripe_subscription_id: subscription.id,
     subscription_status: subscription.status,
     plan,
-    active: true,
   }).eq('id', user.id);
 
   return NextResponse.json({
