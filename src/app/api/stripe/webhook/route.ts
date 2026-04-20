@@ -3,6 +3,17 @@ import { stripe } from '@/lib/stripe';
 import { createServerClient } from '@supabase/ssr';
 import Stripe from 'stripe';
 
+function resolvePlan(priceId: string | undefined): 'standard' | 'pro' | 'free' {
+  if (!priceId) return 'free';
+  const ids = {
+    standard: [process.env.STRIPE_STANDARD_PRICE_ID, process.env.STRIPE_STANDARD_TEST_PRICE_ID],
+    pro:      [process.env.STRIPE_PRO_PRICE_ID,      process.env.STRIPE_PRO_TEST_PRICE_ID],
+  };
+  if (ids.standard.includes(priceId)) return 'standard';
+  if (ids.pro.includes(priceId))      return 'pro';
+  return 'free';
+}
+
 export const runtime = 'edge';
 
 // Supabase admin client（webhook ルートではクッキー不要）
@@ -43,21 +54,28 @@ export async function POST(request: NextRequest) {
         const userId = session.metadata?.userId;
         if (!userId || session.mode !== 'subscription') break;
 
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        const plan = resolvePlan(subscription.items.data[0]?.price.id);
+
         await supabase.from('profiles').update({
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,
           subscription_status: 'active',
+          plan,
+          active: true,
         }).eq('id', userId);
         break;
       }
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
-        if (!userId) break;
+        const isActive = subscription.status === 'active';
+        const plan = isActive ? resolvePlan(subscription.items.data[0]?.price.id) : 'free';
 
         await supabase.from('profiles').update({
           subscription_status: subscription.status as string,
+          plan,
+          active: isActive,
         }).eq('stripe_subscription_id', subscription.id);
         break;
       }
@@ -68,6 +86,8 @@ export async function POST(request: NextRequest) {
         await supabase.from('profiles').update({
           subscription_status: 'inactive',
           stripe_subscription_id: null,
+          plan: 'free',
+          active: false,
         }).eq('stripe_subscription_id', subscription.id);
         break;
       }
@@ -81,6 +101,8 @@ export async function POST(request: NextRequest) {
         if (subscriptionId) {
           await supabase.from('profiles').update({
             subscription_status: 'inactive',
+            plan: 'free',
+            active: false,
           }).eq('stripe_subscription_id', subscriptionId);
         }
         break;
