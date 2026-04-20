@@ -31,11 +31,11 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/apps/trainerdocs" className="text-gray-600 hover:text-gray-900 text-sm">
-            TrainerDocs
+          <Link href="/#features" className="text-gray-600 hover:text-gray-900 text-sm">
+            機能
           </Link>
-          <Link href="/apps/trainerdocs#pricing" className="text-gray-600 hover:text-gray-900 text-sm">
-            機能と料金
+          <Link href="/#pricing" className="text-gray-600 hover:text-gray-900 text-sm">
+            料金
           </Link>
           <Link href="/monitors" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg font-medium transition-colors hover:bg-gray-50">
             ご意見・ご要望
@@ -86,18 +86,18 @@ export default function Header() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-3">
           <Link
-            href="/apps/trainerdocs"
+            href="/#features"
             className="block text-gray-600 text-sm py-2"
             onClick={() => setMenuOpen(false)}
           >
-            TrainerDocs
+            機能
           </Link>
           <Link
-            href="/apps/trainerdocs#pricing"
+            href="/#pricing"
             className="block text-gray-600 text-sm py-2"
             onClick={() => setMenuOpen(false)}
           >
-            機能と料金
+            料金
           </Link>
           <Link
             href="/monitors"
