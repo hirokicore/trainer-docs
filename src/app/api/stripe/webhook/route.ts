@@ -18,11 +18,11 @@ export const runtime = 'edge';
 
 // Supabase admin client（webhook ルートではクッキー不要）
 function createAdminClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => [], setAll: () => {} } }
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  console.log('[webhook] supabase url:', url ? url.slice(0, 30) + '...' : 'MISSING');
+  console.log('[webhook] service_role key head:', key ? key.slice(0, 20) + '...' : 'MISSING');
+  return createServerClient(url, key, { cookies: { getAll: () => [], setAll: () => {} } });
 }
 
 export async function POST(request: NextRequest) {
@@ -52,43 +52,76 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        if (!userId || session.mode !== 'subscription') break;
+        console.log('[webhook] checkout.session.completed');
+        console.log('[webhook]   session.id        :', session.id);
+        console.log('[webhook]   metadata.userId   :', userId ?? 'MISSING');
+        console.log('[webhook]   session.customer  :', session.customer);
+        console.log('[webhook]   session.subscription:', session.subscription);
+        console.log('[webhook]   session.mode      :', session.mode);
+        if (!userId || session.mode !== 'subscription') {
+          console.log('[webhook]   → skipped (no userId or not subscription mode)');
+          break;
+        }
 
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-        const plan = resolvePlan(subscription.items.data[0]?.price.id);
+        const priceId = subscription.items.data[0]?.price.id;
+        const plan = resolvePlan(priceId);
+        console.log('[webhook]   subscription.id   :', subscription.id);
+        console.log('[webhook]   priceId           :', priceId ?? 'MISSING');
+        console.log('[webhook]   resolved plan     :', plan);
 
-        await supabase.from('profiles').update({
+        const { data, error } = await supabase.from('profiles').update({
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,
           subscription_status: 'active',
           plan,
           active: true,
-        }).eq('id', userId);
+        }).eq('id', userId).select();
+        console.log('[webhook]   update data       :', JSON.stringify(data));
+        console.log('[webhook]   update error      :', error ? JSON.stringify(error) : 'null');
+        console.log('[webhook]   rows updated      :', Array.isArray(data) ? data.length : 'unknown');
         break;
       }
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const isActive = subscription.status === 'active';
-        const plan = isActive ? resolvePlan(subscription.items.data[0]?.price.id) : 'free';
+        const priceId = subscription.items.data[0]?.price.id;
+        const plan = isActive ? resolvePlan(priceId) : 'free';
+        console.log('[webhook] customer.subscription.updated');
+        console.log('[webhook]   subscription.id   :', subscription.id);
+        console.log('[webhook]   status            :', subscription.status);
+        console.log('[webhook]   isActive          :', isActive);
+        console.log('[webhook]   priceId           :', priceId ?? 'MISSING');
+        console.log('[webhook]   resolved plan     :', plan);
+        console.log('[webhook]   eq condition      : stripe_subscription_id =', subscription.id);
 
-        await supabase.from('profiles').update({
+        const { data, error } = await supabase.from('profiles').update({
           subscription_status: subscription.status as string,
           plan,
           active: isActive,
-        }).eq('stripe_subscription_id', subscription.id);
+        }).eq('stripe_subscription_id', subscription.id).select();
+        console.log('[webhook]   update data       :', JSON.stringify(data));
+        console.log('[webhook]   update error      :', error ? JSON.stringify(error) : 'null');
+        console.log('[webhook]   rows updated      :', Array.isArray(data) ? data.length : 'unknown');
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
+        console.log('[webhook] customer.subscription.deleted');
+        console.log('[webhook]   subscription.id   :', subscription.id);
+        console.log('[webhook]   eq condition      : stripe_subscription_id =', subscription.id);
 
-        await supabase.from('profiles').update({
+        const { data, error } = await supabase.from('profiles').update({
           subscription_status: 'inactive',
           stripe_subscription_id: null,
           plan: 'free',
           active: false,
-        }).eq('stripe_subscription_id', subscription.id);
+        }).eq('stripe_subscription_id', subscription.id).select();
+        console.log('[webhook]   update data       :', JSON.stringify(data));
+        console.log('[webhook]   update error      :', error ? JSON.stringify(error) : 'null');
+        console.log('[webhook]   rows updated      :', Array.isArray(data) ? data.length : 'unknown');
         break;
       }
 
