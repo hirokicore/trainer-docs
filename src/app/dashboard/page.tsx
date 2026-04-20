@@ -96,7 +96,7 @@ export default async function DashboardPage({
           },
           {
             label: 'プラン',
-            value: isSubscribed ? 'プロ' : 'フリー',
+            value: profile?.plan === 'pro' ? 'プロ' : profile?.plan === 'standard' ? 'スタンダード' : 'フリー',
             icon: CreditCard,
             color: isSubscribed ? 'text-green-600 bg-green-50' : 'text-gray-600 bg-gray-50',
           },
