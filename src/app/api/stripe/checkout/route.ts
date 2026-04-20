@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const debugMode = request.nextUrl.searchParams.get('debug') === '1';
   const rawPlan = request.nextUrl.searchParams.get('plan');
   const plan = rawPlan === 'standard' || rawPlan === 'pro' ? rawPlan : 'pro';
+  const useTestPriceIds = process.env.STRIPE_USE_TEST_PRICE_IDS === 'true';
 
   const supabase = await createClient();
   const {
@@ -40,26 +41,46 @@ export async function GET(request: NextRequest) {
   // プランに対応する Stripe Price ID を解決する
   const standardPriceId = process.env.STRIPE_STANDARD_PRICE_ID;
   const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
+  const standardTestPriceId = process.env.STRIPE_STANDARD_TEST_PRICE_ID;
+  const proTestPriceId = process.env.STRIPE_PRO_TEST_PRICE_ID;
+  const activeStandardPriceId = useTestPriceIds ? standardTestPriceId : standardPriceId;
+  const activeProPriceId = useTestPriceIds ? proTestPriceId : proPriceId;
   const secretKeyHead = process.env.STRIPE_SECRET_KEY
     ? process.env.STRIPE_SECRET_KEY.slice(0, 7) + '...'
     : 'MISSING';
 
-  const priceId = plan === 'standard' ? standardPriceId : proPriceId;
+  const priceId = plan === 'standard' ? activeStandardPriceId : activeProPriceId;
 
   console.log('[checkout] plan:', plan);
+  console.log('[checkout] STRIPE_USE_TEST_PRICE_IDS:', useTestPriceIds);
   console.log('[checkout] STRIPE_STANDARD_PRICE_ID:', standardPriceId ?? 'MISSING');
   console.log('[checkout] STRIPE_PRO_PRICE_ID:', proPriceId ?? 'MISSING');
+  console.log('[checkout] STRIPE_STANDARD_TEST_PRICE_ID:', standardTestPriceId ?? 'MISSING');
+  console.log('[checkout] STRIPE_PRO_TEST_PRICE_ID:', proTestPriceId ?? 'MISSING');
   console.log('[checkout] resolved priceId:', priceId ?? 'UNDEFINED');
   console.log('[checkout] STRIPE_SECRET_KEY head:', secretKeyHead);
   console.log('[checkout] userId:', user.id);
   console.log('[checkout] customerId:', profile?.stripe_customer_id ?? 'none');
 
   if (!priceId) {
-    const missingKey = plan === 'standard' ? 'STRIPE_STANDARD_PRICE_ID' : 'STRIPE_PRO_PRICE_ID';
+    const missingKey = useTestPriceIds
+      ? (plan === 'standard' ? 'STRIPE_STANDARD_TEST_PRICE_ID' : 'STRIPE_PRO_TEST_PRICE_ID')
+      : (plan === 'standard' ? 'STRIPE_STANDARD_PRICE_ID' : 'STRIPE_PRO_PRICE_ID');
     const reason = `priceId が解決できませんでした。環境変数 ${missingKey} を設定してください。`;
     console.error('[checkout] FATAL:', reason);
     if (debugMode) {
-      return NextResponse.json({ error: reason, plan, standardPriceId, proPriceId }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: reason,
+          plan,
+          useTestPriceIds,
+          standardPriceId,
+          proPriceId,
+          standardTestPriceId,
+          proTestPriceId,
+        },
+        { status: 500 }
+      );
     }
     return NextResponse.redirect(
       new URL(`/dashboard/upgrade?error=checkout&message=${encodeURIComponent(reason)}`, request.url)
