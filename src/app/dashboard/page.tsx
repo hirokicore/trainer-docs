@@ -5,6 +5,7 @@ import { PlusCircle, FileText, CreditCard, AlertCircle } from 'lucide-react';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import DocumentList from '@/components/documents/DocumentList';
 import SubscriptionBanner from './SubscriptionBanner';
+import SyncOnSuccess from './SyncOnSuccess';
 import { FREE_TOTAL_LIMIT } from '@/types';
 import type { Document } from '@/types';
 
@@ -69,12 +70,15 @@ export default async function DashboardPage({
       </div>
 
       {params.subscription === 'success' && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
-          <AlertCircle size={18} className="text-green-600 flex-shrink-0" />
-          <p className="text-sm text-green-800 font-medium">
-            サブスクリプションの登録が完了しました！無制限で書類を生成できます。
-          </p>
-        </div>
+        <>
+          <SyncOnSuccess />
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <AlertCircle size={18} className="text-green-600 flex-shrink-0" />
+            <p className="text-sm text-green-800 font-medium">
+              サブスクリプションの登録が完了しました！無制限で書類を生成できます。
+            </p>
+          </div>
+        </>
       )}
 
       {!isSubscribed && (

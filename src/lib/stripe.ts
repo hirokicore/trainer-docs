@@ -56,6 +56,17 @@ export async function createCheckoutSession(
   return session.url!;
 }
 
+export function resolvePlan(priceId: string | undefined): 'standard' | 'pro' | 'free' {
+  if (!priceId) return 'free';
+  const ids = {
+    standard: [process.env.STRIPE_STANDARD_PRICE_ID, process.env.STRIPE_STANDARD_TEST_PRICE_ID],
+    pro:      [process.env.STRIPE_PRO_PRICE_ID,      process.env.STRIPE_PRO_TEST_PRICE_ID],
+  };
+  if (ids.standard.includes(priceId)) return 'standard';
+  if (ids.pro.includes(priceId))      return 'pro';
+  return 'free';
+}
+
 export async function createPortalSession(customerId: string): Promise<string> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
