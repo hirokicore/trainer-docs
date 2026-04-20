@@ -15,7 +15,7 @@ export default function Footer() {
               TrainerDocs
             </Link>
             <p className="text-sm leading-relaxed max-w-xs">
-              パーソナルトレーナー向けの契約書類をAIで自動生成。
+              パーソナルトレーナー向けの契約書類を自動生成。
               書類作成の手間を省いてトレーニングに集中。
             </p>
           </div>

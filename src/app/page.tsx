@@ -9,8 +9,8 @@ import { STANDARD_PLAN_PRICE, PRO_PLAN_PRICE, FREE_TOTAL_LIMIT } from '@/types';
 const features = [
   {
     icon: Zap,
-    title: 'AIで即時生成',
-    description: '情報を入力するだけで、契約書ひな形をGemini AIが数秒で生成します。',
+    title: '即時生成',
+    description: '情報を入力するだけで、契約書ひな形を即時生成します。',
   },
   {
     icon: FileText,
@@ -92,7 +92,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-block bg-white/20 text-white text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-            AIで書類作成を10倍速く
+            書類作成を10倍速く
           </span>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
             パーソナルトレーナーの
@@ -100,7 +100,7 @@ export default function HomePage() {
             <span className="text-yellow-300">契約書類を自動生成</span>
           </h1>
           <p className="text-lg text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            クライアント情報を入力するだけで、AIが生成する契約書ひな形を瞬時に作成。
+            クライアント情報を入力するだけで、契約書ひな形を瞬時に作成。
             もう書類作成に時間を取られない。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -118,7 +118,7 @@ export default function HomePage() {
               ご意見・ご要望を送る
             </Link>
           </div>
-          <p className="text-blue-200 text-sm mt-6">クレジットカード不要・累計{FREE_TOTAL_LIMIT}件まで無料</p>
+          <p className="text-blue-200 text-sm mt-6">フリープランはクレジットカード不要・累計{FREE_TOTAL_LIMIT}件まで無料</p>
         </div>
       </section>
 
