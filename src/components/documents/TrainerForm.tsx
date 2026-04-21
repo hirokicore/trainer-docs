@@ -15,11 +15,11 @@ import {
 import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const STEPS = [
-  { id: 1, label: 'トレーナー情報', icon: User },
-  { id: 2, label: 'クライアント情報', icon: User },
-  { id: 3, label: '契約内容', icon: Briefcase },
-  { id: 4, label: '特記事項', icon: StickyNote },
-  { id: 5, label: '書類種別', icon: FileText },
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'クライアント情報', icon: User },
+  { id: 4, label: '契約内容', icon: Briefcase },
+  { id: 5, label: '特記事項', icon: StickyNote },
 ];
 
 const defaultValues: TrainerFormData = {
@@ -266,7 +266,72 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
           </h2>
         </CardHeader>
         <CardBody>
+          {/* Step 1: 書類選択 */}
           {step === 1 && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500 mb-2">
+                作成する書類の種類を選んでください。後から変更はできません。
+              </p>
+              {(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][])
+                .filter(([value]) => isPro || !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType))
+                .map(([value, label]) => {
+                  const docType = value as DocumentType;
+                  const isProDoc = PRO_ONLY_DOCUMENT_TYPES.has(docType);
+                  const displayLabel = isPro
+                    ? (PRO_USER_LABEL_OVERRIDE[docType] ?? label)
+                    : label;
+                  const description = DOCUMENT_TYPE_DESCRIPTIONS[docType];
+
+                  return (
+                    <label
+                      key={value}
+                      className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                        form.documentType === value
+                          ? 'border-brand-500 bg-brand-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="documentType"
+                        value={value}
+                        checked={form.documentType === value}
+                        onChange={() => update('documentType', value)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                          form.documentType === value
+                            ? 'border-brand-500'
+                            : 'border-gray-400'
+                        }`}
+                      >
+                        {form.documentType === value && (
+                          <div className="w-2 h-2 rounded-full bg-brand-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-gray-900 text-sm">{displayLabel}</p>
+                          {isProDoc && (
+                            <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white leading-none">
+                              Pro
+                            </span>
+                          )}
+                        </div>
+                        {description && (
+                          <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })
+              }
+            </div>
+          )}
+
+          {/* Step 2: トレーナー情報 */}
+          {step === 2 && (
             <div className="space-y-4">
               <Input
                 label="トレーナー名"
@@ -310,7 +375,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {step === 2 && (
+          {/* Step 3: クライアント情報 */}
+          {step === 3 && (
             <div className="space-y-4">
               <Input
                 label="クライアント氏名"
@@ -340,7 +406,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {step === 3 && (
+          {/* Step 4: 契約内容 */}
+          {step === 4 && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
@@ -406,7 +473,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {step === 4 && (
+          {/* Step 5: 特記事項 */}
+          {step === 5 && (
             <div className="space-y-6">
               <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
                 料金・キャンセル等の主要条件は前のステップで設定済みです。
@@ -480,72 +548,9 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                   {(form.freeTextNotes ?? '').length} / 1000
                 </p>
               </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600 mb-4">
-                生成する書類の種類を選択してください。
-              </p>
-              {(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][])
-                .filter(([value]) => isPro || !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType))
-                .map(([value, label]) => {
-                  const docType = value as DocumentType;
-                  const isProDoc = PRO_ONLY_DOCUMENT_TYPES.has(docType);
-                  const displayLabel = isPro
-                    ? (PRO_USER_LABEL_OVERRIDE[docType] ?? label)
-                    : label;
-                  const description = DOCUMENT_TYPE_DESCRIPTIONS[docType];
-
-                  return (
-                    <label
-                      key={value}
-                      className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                        form.documentType === value
-                          ? 'border-brand-500 bg-brand-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="documentType"
-                        value={value}
-                        checked={form.documentType === value}
-                        onChange={() => update('documentType', value)}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          form.documentType === value
-                            ? 'border-brand-500'
-                            : 'border-gray-400'
-                        }`}
-                      >
-                        {form.documentType === value && (
-                          <div className="w-2 h-2 rounded-full bg-brand-500" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-gray-900 text-sm">{displayLabel}</p>
-                          {isProDoc && (
-                            <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white leading-none">
-                              Pro
-                            </span>
-                          )}
-                        </div>
-                        {description && (
-                          <p className="text-xs text-gray-400 mt-0.5">{description}</p>
-                        )}
-                      </div>
-                    </label>
-                  );
-                })
-              }
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mt-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
