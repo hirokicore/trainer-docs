@@ -67,6 +67,36 @@ export function resolvePlan(priceId: string | undefined): 'standard' | 'pro' | '
   return 'free';
 }
 
+/** サブスクリプションを取得する */
+export async function getSubscription(subscriptionId: string) {
+  return stripe.subscriptions.retrieve(subscriptionId);
+}
+
+/** 期間末解約を予約する（cancel_at_period_end: true） */
+export async function cancelSubscription(subscriptionId: string) {
+  return stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
+}
+
+/** 解約予約を取り消す（cancel_at_period_end: false） */
+export async function reactivateSubscription(subscriptionId: string) {
+  return stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: false });
+}
+
+/**
+ * Pro → Standard へのダウングレード。
+ * proration_behavior: 'none' で即時課金なし、次回更新時から適用。
+ */
+export async function downgradeToStandard(subscriptionId: string, itemId: string) {
+  const useTest = process.env.STRIPE_USE_TEST_PRICE_IDS === 'true';
+  const priceId = useTest
+    ? process.env.STRIPE_STANDARD_TEST_PRICE_ID!
+    : process.env.STRIPE_STANDARD_PRICE_ID!;
+  return stripe.subscriptions.update(subscriptionId, {
+    items: [{ id: itemId, price: priceId }],
+    proration_behavior: 'none',
+  });
+}
+
 export async function createPortalSession(customerId: string): Promise<string> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
