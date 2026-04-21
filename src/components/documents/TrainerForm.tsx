@@ -542,9 +542,17 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                   onChange={(e) => update('freeTextNotes', e.target.value)}
                   className="form-input min-h-28 resize-y"
                   maxLength={1000}
-                  placeholder="上の選択肢にない、この契約だけの特別な取り決めがあればご記入ください。&#10;例：毎週火曜固定でセッションを実施する、トレーナー変更の場合は事前通知する、等"
+                  placeholder="例：乙がトレーナーの変更を希望する場合、セッション予定日の7日前までに甲に連絡するものとする。"
                 />
-                <p className="text-xs text-gray-400 mt-1 text-right">
+                <div className="mt-2 space-y-1 text-xs text-gray-500 leading-relaxed">
+                  <p>・主語（甲／乙）が分かるように、1〜2文で具体的にご記入ください。</p>
+                  <p>・第三者が読んでも意味が分かる書き方をお願いします。</p>
+                  <p className="text-gray-400">
+                    ※「トレーナー変更対応」のようなラベルだけの入力ではなく、
+                    「誰が」「何を」「いつまでに」するかが分かる文章にしてください。
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400 mt-2 text-right">
                   {(form.freeTextNotes ?? '').length} / 1000
                 </p>
               </div>
