@@ -11,6 +11,7 @@ import {
   type DocumentType,
   type TrainerFormData,
   type StructuredSpecialTerms,
+  type LiabilityWaiverFormData,
 } from '@/types';
 import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -22,13 +23,35 @@ const STRUCTURED_HINT_TYPES = new Set<DocumentType>([
   'health_check',
 ]);
 
-const STEPS = [
+const DEFAULT_STEPS = [
   { id: 1, label: '書類選択', icon: FileText },
   { id: 2, label: 'トレーナー情報', icon: User },
   { id: 3, label: 'クライアント情報', icon: User },
   { id: 4, label: '契約内容', icon: Briefcase },
   { id: 5, label: '特記事項', icon: StickyNote },
 ];
+
+const LIABILITY_WAIVER_STEPS = [
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'クライアント情報', icon: User },
+  { id: 4, label: '同意事項の確認', icon: StickyNote },
+];
+
+const defaultWaiverValues: Partial<LiabilityWaiverFormData> = {
+  service_items: [],
+  delivery_mode_status: '',
+  risk_understanding_status: '',
+  health_disclosure_status: '',
+  symptom_report_status: '',
+  medical_consultation_status: '',
+  liability_consent_status: '',
+  minor_status: '18歳以上です',
+  guardian_name: '',
+  special_notes: '',
+  consent_confirmed: [],
+  signed_date: '',
+};
 
 const defaultValues: TrainerFormData = {
   trainerName: '',
@@ -164,11 +187,67 @@ function RadioGroup<T extends string>({
   );
 }
 
+// ── シンプルラジオグループ（免責同意書固有フィールド用）────────────────────────────
+
+function SimpleRadioGroup({
+  label,
+  description,
+  options,
+  value,
+  onChange,
+  required = false,
+}: {
+  label: string;
+  description?: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <p className="form-label mb-1">
+        {label}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
+      </p>
+      {description && (
+        <p className="text-xs text-gray-500 mb-2 leading-relaxed">{description}</p>
+      )}
+      <div className="flex flex-col gap-1.5">
+        {options.map((opt) => (
+          <label
+            key={opt}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
+              value === opt
+                ? 'border-brand-500 bg-brand-50 text-brand-700 font-medium'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            <input
+              type="radio"
+              className="sr-only"
+              checked={value === opt}
+              onChange={() => onChange(opt)}
+            />
+            <span
+              className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${
+                value === opt ? 'border-brand-500 bg-brand-500' : 'border-gray-300'
+              }`}
+            />
+            <span className="leading-tight">{opt}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── メインコンポーネント ─────────────────────────────────────
 
 export default function TrainerForm({ isSubscribed = false, isPro = false }: { isSubscribed?: boolean; isPro?: boolean }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
+  const [liabilityWaiverData, setLiabilityWaiverData] = useState<Partial<LiabilityWaiverFormData>>(defaultWaiverValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
   const [showProHint, setShowProHint] = useState(false);
@@ -178,6 +257,9 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const step3TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isGenerating = generationStep > 0;
+  const isLiabilityWaiver = form.documentType === 'liability_waiver';
+  const STEPS = isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS;
+  const totalSteps = STEPS.length;
 
   const clearStepTimers = () => {
     if (step2TimerRef.current) clearTimeout(step2TimerRef.current);
@@ -190,6 +272,11 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleDocumentTypeChange = (docType: string) => {
+    update('documentType', docType);
+    if (step > (docType === 'liability_waiver' ? 4 : 5)) setStep(1);
+  };
+
   const updateSpecialTerms = (field: keyof StructuredSpecialTerms, value: string | undefined) => {
     setForm((prev) => ({
       ...prev,
@@ -197,20 +284,56 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     }));
   };
 
+  const updateWaiver = <K extends keyof LiabilityWaiverFormData>(field: K, value: LiabilityWaiverFormData[K]) => {
+    setLiabilityWaiverData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleWaiverCheckbox = (field: 'service_items' | 'consent_confirmed', option: string) => {
+    setLiabilityWaiverData((prev) => {
+      const current = (prev[field] as string[]) ?? [];
+      const next = current.includes(option) ? current.filter((v) => v !== option) : [...current, option];
+      return { ...prev, [field]: next };
+    });
+  };
+
+  const validateLiabilityWaiverStep = (): string | null => {
+    const w = liabilityWaiverData;
+    if (!w.service_items?.length) return 'サービス内容を1つ以上選択してください';
+    if (!w.delivery_mode_status) return '実施形態を選択してください';
+    if (!w.risk_understanding_status) return '運動リスクについての確認を選択してください';
+    if (!w.health_disclosure_status) return '健康状態申告の重要性について確認してください';
+    if (!w.symptom_report_status) return '体調不良時の申告義務について確認してください';
+    if (!w.medical_consultation_status) return '医師への相談が必要な場合について確認してください';
+    if (!w.liability_consent_status) return '免責条項への同意を選択してください';
+    if (w.minor_status === '18歳未満です' && !w.guardian_name?.trim()) return '未成年の方は保護者氏名を入力してください';
+    if (!w.consent_confirmed?.length) return '最終同意のチェックが必要です';
+    return null;
+  };
+
   const specialTerms = form.specialTerms ?? {};
 
   const handleSubmit = async () => {
     setError('');
-    setGenerationStep(1);
 
+    if (isLiabilityWaiver) {
+      const validationError = validateLiabilityWaiverStep();
+      if (validationError) { setError(validationError); return; }
+    }
+
+    setGenerationStep(1);
     step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
     step3TimerRef.current = setTimeout(() => setGenerationStep(3), 25_000);
 
     try {
+      const requestBody: TrainerFormData = {
+        ...form,
+        liabilityWaiverData: isLiabilityWaiver ? (liabilityWaiverData as LiabilityWaiverFormData) : undefined,
+      };
+
       const res = await fetch('/api/documents/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(requestBody),
       });
 
       if (!res.ok) {
@@ -232,7 +355,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     <div className="max-w-2xl mx-auto">
       {/* Step indicators */}
       <div className="flex items-center justify-between mb-8">
-        {STEPS.map((s, i) => (
+        {(isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS).map((s, i) => (
           <div key={s.id} className="flex items-center flex-1">
             <button
               onClick={() => s.id < step && setStep(s.id)}
@@ -257,7 +380,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                 {s.label}
               </span>
             </button>
-            {i < STEPS.length - 1 && (
+            {i < (isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS).length - 1 && (
               <div
                 className={`flex-1 h-0.5 mx-2 transition-colors ${
                   step > s.id ? 'bg-green-400' : 'bg-gray-200'
@@ -271,7 +394,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-gray-900">
-            {STEPS[step - 1].label}
+            {(isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS)[step - 1].label}
           </h2>
         </CardHeader>
         <CardBody>
@@ -301,7 +424,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                       name="documentType"
                       value="training_contract"
                       checked={form.documentType === 'training_contract'}
-                      onChange={() => update('documentType', 'training_contract')}
+                      onChange={() => handleDocumentTypeChange('training_contract')}
                       className="sr-only"
                     />
                     <div
@@ -335,7 +458,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                         name="documentType"
                         value="pro_training_contract_v1"
                         checked={form.documentType === 'pro_training_contract_v1'}
-                        onChange={() => update('documentType', 'pro_training_contract_v1')}
+                        onChange={() => handleDocumentTypeChange('pro_training_contract_v1')}
                         className="sr-only"
                       />
                       <div
@@ -409,7 +532,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                             name="documentType"
                             value={value}
                             checked={form.documentType === value}
-                            onChange={() => update('documentType', value)}
+                            onChange={() => handleDocumentTypeChange(value)}
                             className="sr-only"
                           />
                           <div
@@ -523,8 +646,82 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {/* Step 4: 契約内容 */}
-          {step === 4 && (
+          {/* Step 4: 免責同意書専用フォーム */}
+          {step === 4 && isLiabilityWaiver && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                各項目を確認し、正直にお答えください。必須項目（<span className="text-red-500">*</span>）はすべて入力が必要です。
+              </p>
+
+              {/* service_items（チェックボックス複数選択） */}
+              <div>
+                <p className="form-label mb-1">提供されるサービス内容<span className="ml-0.5 text-red-500">*</span></p>
+                <p className="text-xs text-gray-500 mb-2">今回のご契約に含まれるサービスをすべて選択してください。</p>
+                <div className="space-y-1.5">
+                  {['パーソナルトレーニング（対面）','パーソナルトレーニング（オンライン）','食事指導・栄養サポート','姿勢・動作分析','ストレッチ・コンディショニング','その他'].map((opt) => {
+                    const checked = (liabilityWaiverData.service_items ?? []).includes(opt);
+                    return (
+                      <label key={opt} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${checked ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        <input type="checkbox" className="sr-only" checked={checked} onChange={() => toggleWaiverCheckbox('service_items', opt)} />
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${checked ? 'border-brand-500 bg-brand-500' : 'border-gray-300'}`}>
+                          {checked && <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none"><path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </span>
+                        <span>{opt}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <SimpleRadioGroup label="実施形態" description="トレーニングの実施形態を選択してください。" options={['対面のみ','オンラインのみ','対面・オンライン両方']} value={liabilityWaiverData.delivery_mode_status ?? ''} onChange={(v) => updateWaiver('delivery_mode_status', v)} required />
+
+              <SimpleRadioGroup label="運動・指導に伴うリスクの理解" description="筋肉痛・疲労・転倒・筋損傷・既往症の悪化など、運動や指導に伴う一般的なリスクがあることを理解していますか？" options={['理解しました','確認が必要です']} value={liabilityWaiverData.risk_understanding_status ?? ''} onChange={(v) => updateWaiver('risk_understanding_status', v)} required />
+
+              <SimpleRadioGroup label="健康状態申告の重要性の理解" description="健康状態確認書または口頭での申告内容が、安全な指導のために重要であることを理解していますか？" options={['理解しました','確認が必要です']} value={liabilityWaiverData.health_disclosure_status ?? ''} onChange={(v) => updateWaiver('health_disclosure_status', v)} required />
+
+              <SimpleRadioGroup label="体調不良時の申告義務の理解" description="トレーニング前・中・後に体調の異変を感じた場合は、速やかにトレーナーへ申告することを理解していますか？" options={['理解しました','確認が必要です']} value={liabilityWaiverData.symptom_report_status ?? ''} onChange={(v) => updateWaiver('symptom_report_status', v)} required />
+
+              <SimpleRadioGroup label="医師への相談が必要な場合があることの理解" description="持病・妊娠・服薬中などの場合は、トレーニング開始前に医師へ相談する必要があることを理解していますか？" options={['理解しました','確認が必要です']} value={liabilityWaiverData.medical_consultation_status ?? ''} onChange={(v) => updateWaiver('medical_consultation_status', v)} required />
+
+              <SimpleRadioGroup label="免責条項への同意" description="運動に伴う一般的なリスクを理解したうえで自らの意思で参加し、通常想定される範囲の事故や体調不良について、事業者・トレーナーに対して過度な責任追及を行わないことに同意しますか？（故意または重大な過失による損害はこの限りではありません。）" options={['同意します','同意しません']} value={liabilityWaiverData.liability_consent_status ?? ''} onChange={(v) => updateWaiver('liability_consent_status', v)} required />
+
+              <SimpleRadioGroup label="未成年かどうか" description="ご年齢をお知らせください。18歳未満の場合は保護者の同意が必要です。" options={['18歳以上です','18歳未満です']} value={liabilityWaiverData.minor_status ?? '18歳以上です'} onChange={(v) => updateWaiver('minor_status', v as LiabilityWaiverFormData['minor_status'])} required />
+
+              {liabilityWaiverData.minor_status === '18歳未満です' && (
+                <Input label="保護者氏名" value={liabilityWaiverData.guardian_name ?? ''} onChange={(e) => updateWaiver('guardian_name', e.target.value)} placeholder="山田 花子" required />
+              )}
+
+              <div>
+                <label className="form-label">その他・特記事項<span className="ml-1 text-xs font-normal text-gray-400">（任意）</span></label>
+                <textarea value={liabilityWaiverData.special_notes ?? ''} onChange={(e) => updateWaiver('special_notes', e.target.value)} className="form-input min-h-24 resize-y" maxLength={500} placeholder="上記以外に、トレーナーに事前に伝えておきたいことがあればご記入ください。" />
+              </div>
+
+              <Input label="署名日" type="date" value={liabilityWaiverData.signed_date ?? ''} onChange={(e) => updateWaiver('signed_date', e.target.value)} />
+
+              {/* 最終同意 */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" className="sr-only" checked={(liabilityWaiverData.consent_confirmed ?? []).length > 0} onChange={() => toggleWaiverCheckbox('consent_confirmed', '本書の内容をすべて読み、理解したうえで同意します。')} />
+                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${(liabilityWaiverData.consent_confirmed ?? []).length > 0 ? 'border-brand-500 bg-brand-500' : 'border-gray-300'}`}>
+                    {(liabilityWaiverData.consent_confirmed ?? []).length > 0 && <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none"><path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">本書の内容をすべて読み、理解したうえで同意します。<span className="ml-0.5 text-red-500">*</span></p>
+                    <p className="text-xs text-gray-500 mt-0.5">この同意がないと書類を生成できません。</p>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 4: 契約内容（免責同意書以外） */}
+          {step === 4 && !isLiabilityWaiver && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
@@ -590,8 +787,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {/* Step 5: 特記事項 */}
-          {step === 5 && (
+          {/* Step 5: 特記事項（免責同意書以外） */}
+          {step === 5 && !isLiabilityWaiver && (
             <div className="space-y-6">
               <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
                 料金・キャンセル等の主要条件は前のステップで設定済みです。
@@ -707,7 +904,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                 戻る
               </Button>
 
-              {step < 5 ? (
+              {step < totalSteps ? (
                 <Button variant="primary" onClick={() => setStep((s) => s + 1)}>
                   次へ
                   <ChevronRight size={16} />

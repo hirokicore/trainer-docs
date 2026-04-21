@@ -79,15 +79,18 @@ export async function POST(request: NextRequest) {
   }
 
   // ── バリデーション ──
-  const required: (keyof TrainerFormData)[] = [
+  const commonRequired: (keyof TrainerFormData)[] = [
     'trainerName', 'businessName', 'address', 'phone', 'email',
-    'clientName', 'contractStartDate', 'contractEndDate',
-    'sessionFee', 'sessionCount', 'documentType',
+    'clientName', 'documentType',
   ];
+  // 免責同意書は契約固有フィールドを使わないためスキップ
+  const contractRequired: (keyof TrainerFormData)[] =
+    formData.documentType === 'liability_waiver'
+      ? []
+      : ['contractStartDate', 'contractEndDate', 'sessionFee', 'sessionCount'];
 
-  for (const field of required) {
+  for (const field of [...commonRequired, ...contractRequired]) {
     if (!formData[field]) {
-      // 入力不足はバリデーションエラー。生成を試みていないためログしない。
       return NextResponse.json({ error: `${field} は必須項目です` }, { status: 400 });
     }
   }
