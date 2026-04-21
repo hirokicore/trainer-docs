@@ -38,7 +38,7 @@
  *   {{notes}}             = {{specialNotes}}
  */
 
-import type { TrainerFormData } from '@/types';
+import type { TrainerFormData, LiabilityWaiverFormData } from '@/types';
 
 // ──────────────────────────────────────────────
 // 内部ユーティリティ
@@ -413,3 +413,136 @@ export const PRO_TRAINING_CONTRACT_V1_TEMPLATE = `
 // テンプレートマップを定数定義後に確定させる
 TRAINING_CONTRACT_TEMPLATE_MAP.standard_v1 = STANDARD_TRAINING_CONTRACT_V1_TEMPLATE;
 TRAINING_CONTRACT_TEMPLATE_MAP.pro_v1      = PRO_TRAINING_CONTRACT_V1_TEMPLATE;
+
+// ──────────────────────────────────────────────
+// 免責同意書テンプレート
+// ──────────────────────────────────────────────
+
+/**
+ * 免責同意書テンプレート本文（未成年ブロックを除く）。
+ * 変数は snake_case で統一（この書類固有のスキーマに合わせる）。
+ *
+ * 変数一覧:
+ *   {{document_number}}      - 書類番号（自動生成）
+ *   {{business_name}}        - 事業者名
+ *   {{service_name}}         - サービス名（businessName にフォールバック）
+ *   {{trainer_name}}         - 担当トレーナー名
+ *   {{client_name}}          - クライアント氏名
+ *   {{signed_date}}          - 署名日
+ *   {{service_items}}        - 提供サービス（「、」区切りで結合）
+ *   {{delivery_mode_status}} - 実施形態
+ *   {{special_notes}}        - 特記事項
+ */
+const LIABILITY_WAIVER_MAIN_TEMPLATE = `
+免責同意書
+
+書類番号：{{document_number}}
+事業者名：{{business_name}}
+サービス名：{{service_name}}
+担当トレーナー：{{trainer_name}}
+
+---
+
+はじめに
+
+本書は、{{service_name}}をご利用いただくにあたり、提供するサービスの内容・運動に伴うリスク・責任の範囲について、事前にご理解・ご同意いただくための書類です。
+
+パーソナルトレーニングや運動指導には、筋肉痛・疲労・転倒・筋損傷・関節への負担・既往症の悪化など、一定のリスクが伴います。{{business_name}}および担当トレーナーは、安全への配慮を最大限行いますが、すべての事故や体調不良を完全に防ぐことを保証するものではありません。
+
+ご不明な点がございましたら、署名前に担当トレーナーまでお気軽にお申し出ください。
+
+---
+
+確認事項
+
+1. 提供サービスおよび実施形態について
+
+今回ご提供するサービスは、{{service_items}}です。実施形態は{{delivery_mode_status}}となります。サービス内容・形態については、契約前にご確認ください。
+
+2. 運動・指導に伴うリスクについて
+
+ご利用者は、筋肉痛・疲労・転倒・筋損傷・関節痛・既往症の悪化など、運動や運動指導に一般的に伴うリスクについて理解したうえでご参加いただきます。
+
+3. 健康状態の申告について
+
+安全なトレーニングのため、現在および過去の健康状態・既往歴・医師からの指示等について、正確かつ誠実にお申し出ください。申告いただいた内容を前提として、担当トレーナーは指導を行います。申告内容に重大な虚偽・漏れがあった場合、それにより生じた不利益については、{{business_name}}およびトレーナーは責任を負いかねます。
+
+4. 体調不良時の対応について
+
+トレーニング前・中・後を問わず、体調の異変（めまい・動悸・息切れ・痛み・倦怠感など）を感じた場合は、直ちにトレーナーへお申し出ください。必要に応じてトレーニングを中断し、医師の診察を受けるようにしてください。
+
+5. 医師への相談について
+
+持病・妊娠中・産後・服薬中など、健康上の注意が必要な状態にある方は、トレーニング開始前に必ず担当医へご相談のうえ、参加の可否についてご確認ください。
+
+6. 責任の範囲について
+
+ご利用者は、運動に伴う一般的なリスクを理解したうえで、自らの意思でサービスにご参加いただきます。{{business_name}}およびトレーナーは、安全に配慮した指導を行いますが、通常想定される運動リスクの範囲内で生じた事故・体調不良については、過度な責任を負いかねます。ただし、{{business_name}}またはトレーナーの故意もしくは重大な過失によって生じた損害については、この限りではありません。
+
+---
+
+特記事項
+
+{{special_notes}}
+
+---
+
+同意・署名
+
+私は、本書の内容をすべて読み、十分に理解したうえで、上記の各事項に同意します。
+
+クライアント氏名（自署）：{{client_name}}
+日付：{{signed_date}}
+`.trim();
+
+/** 未成年者の保護者同意ブロック（minor_status が「18歳未満です」の場合のみ末尾に追加） */
+const LIABILITY_WAIVER_GUARDIAN_BLOCK = `
+
+---
+
+【未成年の方へ】
+本サービスをご利用いただく方が18歳未満の場合、保護者の同意が必要です。
+
+保護者氏名（自署）：{{guardian_name}}
+日付：{{signed_date}}`;
+
+/**
+ * 免責同意書テンプレートを適用してドキュメント文字列を生成する。
+ *
+ * - service_items（checkbox）は「、」区切りで結合
+ * - minor_status が「18歳未満です」の場合のみ保護者同意ブロックを末尾に追加
+ * - 共通変数（businessName / trainerName / clientName）は TrainerFormData から取得
+ * - 書類固有変数は formData.liabilityWaiverData から取得
+ */
+export function applyLiabilityWaiverTemplate(formData: TrainerFormData): string {
+  const w: Partial<LiabilityWaiverFormData> = formData.liabilityWaiverData ?? {};
+
+  const serviceItemsText = Array.isArray(w.service_items) && w.service_items.length > 0
+    ? w.service_items.join('、')
+    : '（未選択）';
+
+  const signedDateLabel = w.signed_date ? formatDateJP(w.signed_date) : todayJP();
+
+  const vars: Record<string, string> = {
+    document_number:       generateContractNumber(),
+    business_name:         formData.businessName,
+    service_name:          formData.businessName, // サービス名は事業者名にフォールバック
+    trainer_name:          formData.trainerName,
+    client_name:           formData.clientName,
+    signed_date:           signedDateLabel,
+    service_items:         serviceItemsText,
+    delivery_mode_status:  w.delivery_mode_status  ?? '（未選択）',
+    special_notes:         w.special_notes?.trim() || 'なし',
+    guardian_name:         w.guardian_name?.trim() || '（記入欄）',
+  };
+
+  const resolve = (template: string) =>
+    template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? `{{${key}}}`);
+
+  const mainBody = resolve(LIABILITY_WAIVER_MAIN_TEMPLATE);
+
+  const isMinor = w.minor_status === '18歳未満です';
+  if (!isMinor) return mainBody;
+
+  return mainBody + resolve(LIABILITY_WAIVER_GUARDIAN_BLOCK);
+}

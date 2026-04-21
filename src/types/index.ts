@@ -77,6 +77,38 @@ export interface StructuredSpecialTerms {
   photoConsent?: 'allowed' | 'not_allowed' | 'ask_each_time';
 }
 
+// ──────────────────────────────────────────────
+// 免責同意書（フォーム固有データ）
+// ──────────────────────────────────────────────
+
+/** 免責同意書の書類固有フォームフィールド */
+export interface LiabilityWaiverFormData {
+  /** 提供サービス（複数選択） */
+  service_items: string[];
+  /** 実施形態 */
+  delivery_mode_status: string;
+  /** 運動リスクの理解 */
+  risk_understanding_status: string;
+  /** 健康状態申告の重要性の理解 */
+  health_disclosure_status: string;
+  /** 体調不良時の申告義務の理解 */
+  symptom_report_status: string;
+  /** 医師への相談が必要な場合の理解 */
+  medical_consultation_status: string;
+  /** 免責条項への同意 */
+  liability_consent_status: string;
+  /** 未成年かどうか */
+  minor_status: '18歳以上です' | '18歳未満です';
+  /** 保護者氏名（未成年の場合のみ必須） */
+  guardian_name?: string;
+  /** その他・特記事項 */
+  special_notes?: string;
+  /** 最終同意チェック */
+  consent_confirmed: string[];
+  /** 署名日（YYYY-MM-DD） */
+  signed_date: string;
+}
+
 export interface TrainerFormData {
   // トレーナー情報
   trainerName: string;
@@ -107,6 +139,9 @@ export interface TrainerFormData {
   specialTerms?: StructuredSpecialTerms;
   /** Gemini で条文整形する自由入力（任意） */
   freeTextNotes?: string;
+
+  /** 免責同意書固有フォームデータ */
+  liabilityWaiverData?: LiabilityWaiverFormData;
 }
 
 export interface Document {

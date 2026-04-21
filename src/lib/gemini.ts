@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TrainerFormData, DOCUMENT_TYPE_LABELS, DocumentType } from '@/types';
-import { applyTemplate, TRAINING_CONTRACT_TEMPLATE_MAP } from '@/lib/templates';
+import { applyTemplate, applyLiabilityWaiverTemplate, TRAINING_CONTRACT_TEMPLATE_MAP } from '@/lib/templates';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -116,11 +116,17 @@ ${trimmed}
  * ログの engine フィールドへの記録に使用する。
  */
 export function getGenerationEngine(documentType: DocumentType): 'gemini' | 'template_only' {
+  if (documentType === 'liability_waiver') return 'template_only';
   return STATIC_TEMPLATE_MAP[documentType] ? 'template_only' : 'gemini';
 }
 
 export async function generateDocument(formData: TrainerFormData): Promise<string> {
-  // Pro版など静的テンプレートが登録されている場合は Gemini を呼ばずに差し込み生成
+  // 免責同意書: 固有フォームデータを使う専用テンプレートエンジン
+  if (formData.documentType === 'liability_waiver') {
+    return applyLiabilityWaiverTemplate(formData);
+  }
+
+  // 委託契約書（標準版・Pro版）など静的テンプレートが登録されている場合
   const staticTemplate = STATIC_TEMPLATE_MAP[formData.documentType];
   if (staticTemplate) {
     return applyTemplate(staticTemplate, formData);
