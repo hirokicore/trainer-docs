@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import PdfDownload from '@/components/documents/PdfDownload';
 import { DOCUMENT_TYPE_LABELS } from '@/types';
 import { formatDate } from '@/lib/utils';
+import { resolvePlanType } from '@/lib/plan';
 import type { Document } from '@/types';
 
 export const runtime = 'edge';
@@ -32,16 +33,15 @@ export default async function DocumentPage({
 
   if (!user) redirect('/auth/login');
 
-  const { data: document, error } = await supabase
-    .from('documents')
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single();
+  const [{ data: document, error }, { data: profile }] = await Promise.all([
+    supabase.from('documents').select('*').eq('id', id).eq('user_id', user.id).single(),
+    supabase.from('profiles').select('plan').eq('id', user.id).single(),
+  ]);
 
   if (error || !document) notFound();
 
   const doc = document as Document;
+  const plan = resolvePlanType(profile?.plan);
   const autoDownload = download === 'true';
 
   return (
@@ -56,7 +56,14 @@ export default async function DocumentPage({
         </Link>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{doc.title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900">{doc.title}</h1>
+              {plan === 'free' && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                  サンプル
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
               <span className="flex items-center gap-1">
                 <User size={14} />
@@ -71,7 +78,7 @@ export default async function DocumentPage({
               </span>
             </div>
           </div>
-          <PdfDownload document={doc} autoDownload={autoDownload} />
+          <PdfDownload document={doc} autoDownload={autoDownload} plan={plan} />
         </div>
       </div>
 
@@ -81,6 +88,18 @@ export default async function DocumentPage({
           <h2 className="text-sm font-medium text-gray-500">書類プレビュー</h2>
         </CardHeader>
         <CardBody>
+          {plan === 'free' && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <span className="mt-0.5 shrink-0 font-semibold">サンプル表示</span>
+              <span>
+                この書類はサンプルです。商用利用・正式書類としての使用はできません。
+                <Link href="/dashboard/upgrade" className="ml-1 font-medium underline underline-offset-2 hover:text-amber-900">
+                  Standard 以上にアップグレード
+                </Link>
+                すると正式出力が可能になります。
+              </span>
+            </div>
+          )}
           <div className="bg-white border border-gray-100 rounded-lg p-8 min-h-96 shadow-sm">
             <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
               {doc.content}

@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Button from '@/components/ui/Button';
-import { Download } from 'lucide-react';
+import { Download, Lock } from 'lucide-react';
 import type { Document } from '@/types';
 import { DOCUMENT_TYPE_LABELS } from '@/types';
+import type { Plan } from '@/lib/plan';
 
 // キャッシュ：フォントバイト列をメモリに保持して2回目以降を高速化
 let cachedFontBytes: ArrayBuffer | null = null;
@@ -121,10 +123,13 @@ async function buildPdf(doc: Document): Promise<Uint8Array> {
 interface PdfDownloadProps {
   document: Document;
   autoDownload?: boolean;
+  plan?: Plan;
 }
 
-export default function PdfDownload({ document, autoDownload }: PdfDownloadProps) {
+export default function PdfDownload({ document, autoDownload, plan = 'free' }: PdfDownloadProps) {
   const [loading, setLoading] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+  const isFree = plan === 'free';
 
   const downloadPdf = async () => {
     setLoading(true);
@@ -148,9 +153,36 @@ export default function PdfDownload({ document, autoDownload }: PdfDownloadProps
   };
 
   useEffect(() => {
-    if (autoDownload) downloadPdf();
+    if (autoDownload && !isFree) downloadPdf();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoDownload]);
+  }, [autoDownload, isFree]);
+
+  if (isFree) {
+    return (
+      <div className="flex flex-col items-end gap-2">
+        <Button
+          variant="primary"
+          size="lg"
+          className="gap-2"
+          onClick={() => setShowNote((v) => !v)}
+        >
+          <Lock size={18} />
+          PDFでダウンロード
+        </Button>
+        {showNote && (
+          <p className="text-xs text-gray-500 text-right">
+            PDF出力は Standard 以上で利用できます。
+            <Link
+              href="/dashboard/upgrade"
+              className="ml-1 text-brand-600 underline underline-offset-2 hover:text-brand-700"
+            >
+              アップグレード
+            </Link>
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Button variant="primary" size="lg" loading={loading} onClick={downloadPdf} className="gap-2">

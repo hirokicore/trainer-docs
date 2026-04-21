@@ -7,6 +7,7 @@ import DocumentList from '@/components/documents/DocumentList';
 import SubscriptionBanner from './SubscriptionBanner';
 import SyncOnSuccess from './SyncOnSuccess';
 import { FREE_TOTAL_LIMIT } from '@/types';
+import { resolvePlanType } from '@/lib/plan';
 import type { Document } from '@/types';
 
 export const runtime = 'edge';
@@ -40,6 +41,7 @@ export default async function DashboardPage({
   const isSubscribed = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing';
   const documentCount = count ?? 0;
   const canCreate = isSubscribed || documentCount < FREE_TOTAL_LIMIT;
+  const plan = resolvePlanType(profile?.plan);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -145,6 +147,7 @@ export default async function DashboardPage({
           <DocumentList
             documents={(documents as Document[]) ?? []}
             canCreate={canCreate}
+            plan={plan}
           />
         </CardBody>
       </Card>

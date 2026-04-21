@@ -1,14 +1,18 @@
 import Link from 'next/link';
-import { FileText, Download, Eye, PlusCircle } from 'lucide-react';
+import { FileText, Download, Eye, Lock, PlusCircle } from 'lucide-react';
 import { DOCUMENT_TYPE_LABELS, type Document } from '@/types';
 import { formatDate } from '@/lib/utils';
+import type { Plan } from '@/lib/plan';
 
 interface DocumentListProps {
   documents: Document[];
   canCreate: boolean;
+  plan?: Plan;
 }
 
-export default function DocumentList({ documents, canCreate }: DocumentListProps) {
+export default function DocumentList({ documents, canCreate, plan = 'free' }: DocumentListProps) {
+  const isFree = plan === 'free';
+
   if (documents.length === 0) {
     return (
       <div className="py-16 text-center">
@@ -43,9 +47,16 @@ export default function DocumentList({ documents, canCreate }: DocumentListProps
             <FileText size={18} className="text-brand-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {doc.title}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {doc.title}
+              </p>
+              {isFree && (
+                <span className="shrink-0 text-xs font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
+                  サンプル
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3 mt-0.5">
               <span className="text-xs text-gray-500">
                 {DOCUMENT_TYPE_LABELS[doc.document_type]}
@@ -64,13 +75,24 @@ export default function DocumentList({ documents, canCreate }: DocumentListProps
               <Eye size={14} />
               確認
             </Link>
-            <Link
-              href={`/documents/${doc.id}?download=true`}
-              className="inline-flex items-center gap-1.5 text-xs text-white bg-brand-600 hover:bg-brand-700 px-2.5 py-1.5 rounded-lg transition-colors"
-            >
-              <Download size={14} />
-              PDF
-            </Link>
+            {isFree ? (
+              <Link
+                href="/dashboard/upgrade"
+                title="PDF出力は Standard 以上で利用できます"
+                className="inline-flex items-center gap-1.5 text-xs text-gray-400 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                <Lock size={14} />
+                PDF
+              </Link>
+            ) : (
+              <Link
+                href={`/documents/${doc.id}?download=true`}
+                className="inline-flex items-center gap-1.5 text-xs text-white bg-brand-600 hover:bg-brand-700 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                <Download size={14} />
+                PDF
+              </Link>
+            )}
           </div>
         </div>
       ))}

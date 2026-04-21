@@ -112,4 +112,5 @@ export interface Profile {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: string;
+  plan?: 'free' | 'standard' | 'pro';
 }
