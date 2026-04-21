@@ -57,6 +57,26 @@ export const PRO_ONLY_DOCUMENT_TYPES = new Set<DocumentType>([
   'pro_training_contract_v1',
 ]);
 
+// ──────────────────────────────────────────────
+// 特記事項（構造化）
+// ──────────────────────────────────────────────
+
+/** 頻出パターンの特記事項を選択式で保持する型 */
+export interface StructuredSpecialTerms {
+  /** 交通費: 料金に含む / 別途実費 / 該当なし */
+  transportationFee?: 'included' | 'separate' | 'not_applicable';
+  /** 施設利用料: クライアント負担 / トレーナー負担 / 折半 / 該当なし */
+  facilityFee?: 'client' | 'trainer' | 'split' | 'not_applicable';
+  /** キャンセルポリシー: パターンA(24h) / パターンB(前日50%・当日100%) / パターンC(個別合意) */
+  cancellationPolicy?: 'pattern_a' | 'pattern_b' | 'pattern_c';
+  /** セッション形態: 対面のみ / オンラインのみ / 対面＋オンライン */
+  sessionFormat?: 'in_person' | 'online' | 'both';
+  /** 対面の場合の主な場所（任意） */
+  sessionLocation?: string;
+  /** 撮影・利用許諾: 許可 / 不可 / 都度確認 */
+  photoConsent?: 'allowed' | 'not_allowed' | 'ask_each_time';
+}
+
 export interface TrainerFormData {
   // トレーナー情報
   trainerName: string;
@@ -81,8 +101,12 @@ export interface TrainerFormData {
   // 書類種別
   documentType: DocumentType;
 
-  // 特記事項
+  // 特記事項（APIがマージして notes に書き込む）
   notes: string;
+  /** 頻出パターンの選択式特記事項 */
+  specialTerms?: StructuredSpecialTerms;
+  /** Gemini で条文整形する自由入力（任意） */
+  freeTextNotes?: string;
 }
 
 export interface Document {

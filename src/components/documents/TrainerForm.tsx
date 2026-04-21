@@ -5,14 +5,21 @@ import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
-import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, type DocumentType, type TrainerFormData } from '@/types';
-import { User, Briefcase, FileText, ChevronRight, ChevronLeft } from 'lucide-react';
+import {
+  DOCUMENT_TYPE_LABELS,
+  PRO_ONLY_DOCUMENT_TYPES,
+  type DocumentType,
+  type TrainerFormData,
+  type StructuredSpecialTerms,
+} from '@/types';
+import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const STEPS = [
   { id: 1, label: 'トレーナー情報', icon: User },
   { id: 2, label: 'クライアント情報', icon: User },
   { id: 3, label: '契約内容', icon: Briefcase },
-  { id: 4, label: '書類種別', icon: FileText },
+  { id: 4, label: '特記事項', icon: StickyNote },
+  { id: 5, label: '書類種別', icon: FileText },
 ];
 
 const defaultValues: TrainerFormData = {
@@ -32,6 +39,8 @@ const defaultValues: TrainerFormData = {
   paymentMethod: '銀行振込',
   documentType: 'training_contract',
   notes: '',
+  specialTerms: {},
+  freeTextNotes: '',
 };
 
 /** Proユーザーには training_contract を「標準版」と明示するためのオーバーライドラベル */
@@ -59,6 +68,96 @@ const GENERATION_STEP_MESSAGES: Record<Exclude<GenerationStep, 0>, string> = {
   3: 'PDFを作成しています…',
 };
 
+// ── 特記事項の選択肢 ──────────────────────────────────────────
+
+type RadioOption<T extends string> = { value: T; label: string };
+
+const TRANSPORTATION_FEE_OPTIONS: RadioOption<NonNullable<StructuredSpecialTerms['transportationFee']> | ''>[] = [
+  { value: '', label: '指定しない' },
+  { value: 'included', label: '料金に含む' },
+  { value: 'separate', label: '別途実費精算' },
+  { value: 'not_applicable', label: '該当なし' },
+];
+
+const FACILITY_FEE_OPTIONS: RadioOption<NonNullable<StructuredSpecialTerms['facilityFee']> | ''>[] = [
+  { value: '', label: '指定しない' },
+  { value: 'client', label: 'クライアント負担' },
+  { value: 'trainer', label: 'トレーナー負担' },
+  { value: 'split', label: '折半' },
+  { value: 'not_applicable', label: '該当なし' },
+];
+
+const CANCELLATION_POLICY_OPTIONS: RadioOption<NonNullable<StructuredSpecialTerms['cancellationPolicy']> | ''>[] = [
+  { value: '', label: '指定しない（テンプレートに従う）' },
+  { value: 'pattern_a', label: 'パターンA：24時間前まで無料・以降100%' },
+  { value: 'pattern_b', label: 'パターンB：前日50%・当日100%' },
+  { value: 'pattern_c', label: 'パターンC：甲乙個別合意に従う' },
+];
+
+const SESSION_FORMAT_OPTIONS: RadioOption<NonNullable<StructuredSpecialTerms['sessionFormat']> | ''>[] = [
+  { value: '', label: '指定しない' },
+  { value: 'in_person', label: '対面のみ' },
+  { value: 'online', label: 'オンラインのみ' },
+  { value: 'both', label: '対面＋オンライン' },
+];
+
+const PHOTO_CONSENT_OPTIONS: RadioOption<NonNullable<StructuredSpecialTerms['photoConsent']> | ''>[] = [
+  { value: '', label: '指定しない' },
+  { value: 'allowed', label: '撮影・利用OK' },
+  { value: 'not_allowed', label: '撮影・利用不可' },
+  { value: 'ask_each_time', label: '都度確認' },
+];
+
+// ── ラジオグループ UI ────────────────────────────────────────
+
+function RadioGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  cols = 3,
+}: {
+  label: string;
+  options: RadioOption<T>[];
+  value: T | '';
+  onChange: (v: T | '') => void;
+  cols?: 2 | 3 | 4;
+}) {
+  const colClass = { 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' }[cols];
+  return (
+    <div>
+      <p className="form-label mb-2">{label}</p>
+      <div className={`grid ${colClass} gap-2`}>
+        {options.map((opt) => (
+          <label
+            key={opt.value}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
+              value === opt.value
+                ? 'border-brand-500 bg-brand-50 text-brand-700 font-medium'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            <input
+              type="radio"
+              className="sr-only"
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value as T | '')}
+            />
+            <span
+              className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${
+                value === opt.value ? 'border-brand-500 bg-brand-500' : 'border-gray-300'
+              }`}
+            />
+            <span className="leading-tight">{opt.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── メインコンポーネント ─────────────────────────────────────
+
 export default function TrainerForm({ isSubscribed = false, isPro = false }: { isSubscribed?: boolean; isPro?: boolean }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
@@ -66,7 +165,6 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // タイムアウトIDを ref で保持し、完了/失敗時に必ずクリアする
   const step2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const step3TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,13 +181,20 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const updateSpecialTerms = (field: keyof StructuredSpecialTerms, value: string | undefined) => {
+    setForm((prev) => ({
+      ...prev,
+      specialTerms: { ...(prev.specialTerms ?? {}), [field]: value || undefined },
+    }));
+  };
+
+  const specialTerms = form.specialTerms ?? {};
+
   const handleSubmit = async () => {
     setError('');
-    setGenerationStep(1); // Step 1: 開始直後
+    setGenerationStep(1);
 
-    // Step 2: 10 秒後（Gemini がレスポンスを返し始める頃）
     step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
-    // Step 3: 25 秒後（長い書類の場合に備えた後半演出）
     step3TimerRef.current = setTimeout(() => setGenerationStep(3), 25_000);
 
     try {
@@ -109,7 +214,6 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '予期しないエラーが発生しました');
     } finally {
-      // 成功・失敗いずれでもタイマーを止め、演出をリセット
       clearStepTimers();
       setGenerationStep(0);
     }
@@ -299,25 +403,92 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="form-label">特記事項</label>
-                <textarea
-                  value={form.notes}
-                  onChange={(e) => update('notes', e.target.value)}
-                  className="form-input min-h-24 resize-y"
-                  placeholder="キャンセルポリシー、特別条件など..."
-                />
-              </div>
             </div>
           )}
 
           {step === 4 && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                料金・キャンセル等の主要条件は前のステップで設定済みです。
+                この契約だけに適用したい追加条件がある場合のみ選択・記入してください。
+                すべて任意項目です。
+              </p>
+
+              <RadioGroup
+                label="交通費"
+                options={TRANSPORTATION_FEE_OPTIONS}
+                value={(specialTerms.transportationFee ?? '') as NonNullable<StructuredSpecialTerms['transportationFee']> | ''}
+                onChange={(v) => updateSpecialTerms('transportationFee', v || undefined)}
+                cols={4}
+              />
+
+              <RadioGroup
+                label="施設利用料"
+                options={FACILITY_FEE_OPTIONS}
+                value={(specialTerms.facilityFee ?? '') as NonNullable<StructuredSpecialTerms['facilityFee']> | ''}
+                onChange={(v) => updateSpecialTerms('facilityFee', v || undefined)}
+                cols={4}
+              />
+
+              <RadioGroup
+                label="キャンセルポリシーの明示"
+                options={CANCELLATION_POLICY_OPTIONS}
+                value={(specialTerms.cancellationPolicy ?? '') as NonNullable<StructuredSpecialTerms['cancellationPolicy']> | ''}
+                onChange={(v) => updateSpecialTerms('cancellationPolicy', v || undefined)}
+                cols={2}
+              />
+
+              <div className="space-y-3">
+                <RadioGroup
+                  label="セッション形態"
+                  options={SESSION_FORMAT_OPTIONS}
+                  value={(specialTerms.sessionFormat ?? '') as NonNullable<StructuredSpecialTerms['sessionFormat']> | ''}
+                  onChange={(v) => updateSpecialTerms('sessionFormat', v || undefined)}
+                  cols={4}
+                />
+                {(specialTerms.sessionFormat === 'in_person' || specialTerms.sessionFormat === 'both') && (
+                  <Input
+                    label="対面の主な実施場所"
+                    value={specialTerms.sessionLocation ?? ''}
+                    onChange={(e) => updateSpecialTerms('sessionLocation', e.target.value || undefined)}
+                    placeholder="例：渋谷区〇〇スポーツクラブ"
+                  />
+                )}
+              </div>
+
+              <RadioGroup
+                label="撮影・利用許諾"
+                options={PHOTO_CONSENT_OPTIONS}
+                value={(specialTerms.photoConsent ?? '') as NonNullable<StructuredSpecialTerms['photoConsent']> | ''}
+                onChange={(v) => updateSpecialTerms('photoConsent', v || undefined)}
+                cols={4}
+              />
+
+              <div>
+                <label className="form-label">
+                  その他の特記事項
+                  <span className="ml-1 text-xs font-normal text-gray-400">（任意・AI が条文に整形します）</span>
+                </label>
+                <textarea
+                  value={form.freeTextNotes ?? ''}
+                  onChange={(e) => update('freeTextNotes', e.target.value)}
+                  className="form-input min-h-28 resize-y"
+                  maxLength={1000}
+                  placeholder="上の選択肢にない、この契約だけの特別な取り決めがあればご記入ください。&#10;例：毎週火曜固定でセッションを実施する、トレーナー変更の場合は事前通知する、等"
+                />
+                <p className="text-xs text-gray-400 mt-1 text-right">
+                  {(form.freeTextNotes ?? '').length} / 1000
+                </p>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
             <div className="space-y-3">
               <p className="text-sm text-gray-600 mb-4">
                 生成する書類の種類を選択してください。
               </p>
               {(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][])
-                // Proプラン専用の種別はFreeユーザーには非表示
                 .filter(([value]) => isPro || !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType))
                 .map(([value, label]) => {
                   const docType = value as DocumentType;
@@ -382,7 +553,6 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
           )}
 
           <div className="mt-8 pt-6 border-t border-gray-100 space-y-4">
-            {/* 生成進捗メッセージ（generationStep > 0 のときのみ表示） */}
             {isGenerating && (
               <div
                 role="status"
@@ -407,7 +577,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                 戻る
               </Button>
 
-              {step < 4 ? (
+              {step < 5 ? (
                 <Button variant="primary" onClick={() => setStep((s) => s + 1)}>
                   次へ
                   <ChevronRight size={16} />

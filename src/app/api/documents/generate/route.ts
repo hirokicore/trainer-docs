@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateDocument, getGenerationEngine } from '@/lib/gemini';
+import { generateDocument, getGenerationEngine, formatFreeTextNotes } from '@/lib/gemini';
 import { saveGenerationLog } from '@/lib/generation-log';
+import { buildStructuredNotesText } from '@/lib/special-terms';
 import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, FREE_TOTAL_LIMIT, type TrainerFormData } from '@/types';
 
 // Edge runtime は最大 25 秒のため、Gemini 生成（training_contract 等）がタイムアウトする。
@@ -91,21 +92,44 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ── 特記事項のマージ ──
+  // 1. 選択式特記事項 → テンプレ文に変換
+  const structuredText = formData.specialTerms
+    ? buildStructuredNotesText(formData.specialTerms)
+    : '';
+
+  // 2. 自由入力 → Gemini で条文整形（エラーは無視してそのまま使用）
+  let formattedFreeText = '';
+  if (formData.freeTextNotes?.trim()) {
+    try {
+      formattedFreeText = await formatFreeTextNotes(formData.freeTextNotes);
+    } catch {
+      formattedFreeText = formData.freeTextNotes.trim();
+    }
+  }
+
+  // 3. 統合して formData.notes に書き込む
+  const mergedParts = [structuredText, formattedFreeText].filter(Boolean);
+  const processedFormData: TrainerFormData = {
+    ...formData,
+    notes: mergedParts.length > 0 ? mergedParts.join('\n\n') : 'なし',
+  };
+
   // ── 生成処理 ──
   try {
-    const content = await generateDocument(formData);
+    const content = await generateDocument(processedFormData);
     const durationMs = Date.now() - start;
 
-    const title = `${DOCUMENT_TYPE_LABELS[formData.documentType]}（${formData.clientName}）`;
+    const title = `${DOCUMENT_TYPE_LABELS[processedFormData.documentType]}（${processedFormData.clientName}）`;
 
     const { data, error } = await supabase
       .from('documents')
       .insert({
         user_id: user.id,
-        document_type: formData.documentType,
+        document_type: processedFormData.documentType,
         title,
         content,
-        form_data: formData,
+        form_data: processedFormData,
       })
       .select('id')
       .single();
@@ -115,8 +139,8 @@ export async function POST(request: NextRequest) {
     // 成功ログ（ログ失敗はレスポンスに影響しない）
     await saveGenerationLog(supabase, {
       user_id: user.id,
-      document_type: formData.documentType,
-      template_id: formData.documentType,
+      document_type: processedFormData.documentType,
+      template_id: processedFormData.documentType,
       is_subscribed: isSubscribed,
       is_pro_template: isProTemplate,
       status: 'success',

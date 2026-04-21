@@ -66,6 +66,37 @@ const DOCUMENT_SPECIFIC_INSTRUCTIONS: Partial<Record<DocumentType, string>> = {
 const MAX_RETRIES = 3;
 
 /**
+ * ユーザーが自由記述した特記事項を、契約書の条文トーンに合わせて整形する。
+ * 空文字や空白のみの場合は空文字を返す。
+ */
+export async function formatFreeTextNotes(freeText: string): Promise<string> {
+  const trimmed = freeText.trim();
+  if (!trimmed) return '';
+
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  const prompt = `
+あなたはパーソナルトレーナーとクライアント間の委託契約書を作成する専門家です。
+以下のユーザー入力を、既存の契約書と自然につながる正式な日本語の特記事項条文に整形してください。
+
+【ユーザー入力】
+${trimmed}
+
+【整形方針】
+- 「〜とする」「〜するものとする」など契約書調の文末表現を使うこと
+- 一つの段落または箇条書き（「・」始まり）で出力すること
+- 条番号は付けないこと
+- プレーンテキストのみ（マークダウン不可）
+- 元の意図を保ちつつ、過度に長くしないこと
+
+整形後の条文のみを出力してください。前置き・説明文は不要です。
+`.trim();
+
+  const result = await model.generateContent(prompt);
+  return (await result.response).text().trim();
+}
+
+/**
  * 書類タイプに対して実際に使われる生成エンジンを返す。
  * ログの engine フィールドへの記録に使用する。
  */
