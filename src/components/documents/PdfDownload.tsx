@@ -5,8 +5,17 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { Download, Lock } from 'lucide-react';
 import type { Document } from '@/types';
-import { DOCUMENT_TYPE_LABELS } from '@/types';
+import { DOCUMENT_TYPE_LABELS, PDF_DOCUMENT_TYPE_LABELS } from '@/types';
 import type { Plan } from '@/lib/plan';
+
+/**
+ * 画面管理用の版別表記をコンテンツから除去する。
+ * 既存書類（Supabase 保存済み）の後方互換のために PDF 生成時のみ適用する。
+ */
+const VERSION_SUFFIXES = ['（標準版）', '（Pro・章立て版）'] as const;
+function stripVersionSuffixes(content: string): string {
+  return VERSION_SUFFIXES.reduce((s, suffix) => s.split(suffix).join(''), content);
+}
 
 // キャッシュ：フォントバイト列をメモリに保持して2回目以降を高速化
 let cachedFontBytes: ArrayBuffer | null = null;
@@ -86,8 +95,8 @@ async function buildPdf(doc: Document): Promise<Uint8Array> {
     y -= size * 1.9;
   };
 
-  // ── タイトル ──
-  const title = DOCUMENT_TYPE_LABELS[doc.document_type];
+  // ── タイトル（PDF用：版別表記なし） ──
+  const title = PDF_DOCUMENT_TYPE_LABELS[doc.document_type];
   const titleW = font.widthOfTextAtSize(title, titleFontSize);
   page.drawText(title, {
     x: (A4_W - titleW) / 2,
@@ -107,8 +116,8 @@ async function buildPdf(doc: Document): Promise<Uint8Array> {
   });
   y -= lineHeight;
 
-  // ── 本文 ──
-  const rawLines = doc.content.split('\n');
+  // ── 本文（版別サフィックスを除去してから描画） ──
+  const rawLines = stripVersionSuffixes(doc.content).split('\n');
   for (const rawLine of rawLines) {
     const wrapped = wrapText(rawLine, widthOf, maxWidth);
     for (const line of wrapped) {

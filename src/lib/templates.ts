@@ -195,7 +195,7 @@ export const TRAINING_CONTRACT_TEMPLATE_MAP: Record<TrainingContractVariant, str
 
 // ── 標準版（standard_v1）────────────────────────────────────────────
 export const STANDARD_TRAINING_CONTRACT_V1_TEMPLATE = `
-パーソナルトレーニング委託契約書（標準版）
+パーソナルトレーニング委託契約書
 書類番号：{{contractNumber}}　作成日：{{contractDate}}
 
 本契約書は、以下の甲および乙との間において、パーソナルトレーニング指導の委託に関し、以下の各条項のとおり契約を締結する。

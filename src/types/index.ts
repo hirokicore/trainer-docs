@@ -36,6 +36,22 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   effect_disclaimer: '効果保証なし同意書',
 };
 
+/**
+ * PDF 出力時に使うタイトルラベル。
+ * 版別・管理用の表記を除いた正式名称のみを記載する。
+ * 画面表示には DOCUMENT_TYPE_LABELS を使い、こちらは PDF 生成専用とする。
+ */
+export const PDF_DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  training_contract: 'パーソナルトレーニング委託契約書',
+  pro_training_contract_v1: 'トレーニング委託契約書',
+  health_check: '健康状態確認書',
+  liability_waiver: '免責同意書',
+  membership_form: '入会申込書',
+  cancellation_policy: 'キャンセル・返金ポリシー同意書',
+  mid_cancel_agreement: '途中解約・クーリングオフ同意書',
+  effect_disclaimer: '効果保証なし同意書',
+};
+
 /** Proプラン専用の書類タイプ。Freeユーザーには選択肢を非表示・APIでも弾く。 */
 export const PRO_ONLY_DOCUMENT_TYPES = new Set<DocumentType>([
   'pro_training_contract_v1',
