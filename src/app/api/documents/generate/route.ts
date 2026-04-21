@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateDocument, getGenerationEngine, formatFreeTextNotes } from '@/lib/gemini';
+import { generateDocument, getGenerationEngine, formatFreeTextNotes, formatFallbackNotes } from '@/lib/gemini';
 import { saveGenerationLog } from '@/lib/generation-log';
 import { buildStructuredNotesText } from '@/lib/special-terms';
 import { DOCUMENT_TYPE_LABELS, PRO_ONLY_DOCUMENT_TYPES, FREE_TOTAL_LIMIT, type TrainerFormData } from '@/types';
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     try {
       formattedFreeText = await formatFreeTextNotes(formData.freeTextNotes);
     } catch {
-      formattedFreeText = formData.freeTextNotes.trim();
+      formattedFreeText = formatFallbackNotes(formData.freeTextNotes);
     }
   }
 

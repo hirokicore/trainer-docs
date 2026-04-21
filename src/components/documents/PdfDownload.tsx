@@ -17,6 +17,22 @@ function stripVersionSuffixes(content: string): string {
   return VERSION_SUFFIXES.reduce((s, suffix) => s.split(suffix).join(''), content);
 }
 
+/**
+ * PDF はタイトルを別途描画するため、content の先頭行にタイトルが含まれる場合はスキップする。
+ * テンプレート・Gemini 生成どちらも先頭行が書類タイトルになる慣習を前提とする。
+ */
+const KNOWN_PDF_TITLES = new Set<string>([
+  ...Object.values(PDF_DOCUMENT_TYPE_LABELS),
+  ...Object.values(DOCUMENT_TYPE_LABELS),
+  'パーソナルトレーニング委託契約書', // 旧標準テンプレートタイトル（後方互換）
+]);
+function skipLeadingTitle(lines: string[]): string[] {
+  if (lines.length > 0 && KNOWN_PDF_TITLES.has(lines[0].trim())) {
+    return lines.slice(1);
+  }
+  return lines;
+}
+
 // キャッシュ：フォントバイト列をメモリに保持して2回目以降を高速化
 let cachedFontBytes: ArrayBuffer | null = null;
 
@@ -116,8 +132,8 @@ async function buildPdf(doc: Document): Promise<Uint8Array> {
   });
   y -= lineHeight;
 
-  // ── 本文（版別サフィックスを除去してから描画） ──
-  const rawLines = stripVersionSuffixes(doc.content).split('\n');
+  // ── 本文（版別サフィックス除去 → 先頭タイトル行スキップ → 描画） ──
+  const rawLines = skipLeadingTitle(stripVersionSuffixes(doc.content).split('\n'));
   for (const rawLine of rawLines) {
     const wrapped = wrapText(rawLine, widthOf, maxWidth);
     for (const line of wrapped) {

@@ -286,7 +286,7 @@ export const STANDARD_TRAINING_CONTRACT_V1_TEMPLATE = `
 // ── Pro版（pro_v1）── 章立て版（第1章〜第10章）────────────────────
 export const PRO_TRAINING_CONTRACT_V1_TEMPLATE = `
 トレーニング委託契約書
-契約書No. 【契約書番号】
+書類番号：{{contractNumber}}　作成日：{{contractDate}}
 
 本契約書は、以下の甲および乙との間において、トレーニング委託に関し、以下の各条項のとおり契約を締結する。
 
