@@ -12,7 +12,15 @@ import {
   type TrainerFormData,
   type StructuredSpecialTerms,
 } from '@/types';
-import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
+import Link from 'next/link';
+
+/** 章立て版への布石として「準備中」ヒントを表示する書類タイプ */
+const STRUCTURED_HINT_TYPES = new Set<DocumentType>([
+  'liability_waiver',
+  'cancellation_policy',
+  'health_check',
+]);
 
 const STEPS = [
   { id: 1, label: '書類選択', icon: FileText },
@@ -163,6 +171,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
+  const [showProHint, setShowProHint] = useState(false);
   const router = useRouter();
 
   const step2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -268,25 +277,55 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
         <CardBody>
           {/* Step 1: 書類選択 */}
           {step === 1 && (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-500 mb-2">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
                 作成する書類の種類を選んでください。後から変更はできません。
               </p>
-              {(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][])
-                .filter(([value]) => isPro || !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType))
-                .map(([value, label]) => {
-                  const docType = value as DocumentType;
-                  const isProDoc = PRO_ONLY_DOCUMENT_TYPES.has(docType);
-                  const displayLabel = isPro
-                    ? (PRO_USER_LABEL_OVERRIDE[docType] ?? label)
-                    : label;
-                  const description = DOCUMENT_TYPE_DESCRIPTIONS[docType];
 
-                  return (
+              {/* ── 委託契約書グループ（標準版／章立て版 横並び） ── */}
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  委託契約書
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* 標準版 */}
+                  <label
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                      form.documentType === 'training_contract'
+                        ? 'border-brand-500 bg-brand-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="documentType"
+                      value="training_contract"
+                      checked={form.documentType === 'training_contract'}
+                      onChange={() => update('documentType', 'training_contract')}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        form.documentType === 'training_contract' ? 'border-brand-500' : 'border-gray-400'
+                      }`}
+                    >
+                      {form.documentType === 'training_contract' && (
+                        <div className="w-2 h-2 rounded-full bg-brand-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {isPro ? PRO_USER_LABEL_OVERRIDE['training_contract'] : DOCUMENT_TYPE_LABELS['training_contract']}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">条文ごとに章立てされていない標準構成</p>
+                    </div>
+                  </label>
+
+                  {/* 章立て版（Pro専用） */}
+                  {isPro ? (
                     <label
-                      key={value}
                       className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                        form.documentType === value
+                        form.documentType === 'pro_training_contract_v1'
                           ? 'border-brand-500 bg-brand-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -294,39 +333,117 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                       <input
                         type="radio"
                         name="documentType"
-                        value={value}
-                        checked={form.documentType === value}
-                        onChange={() => update('documentType', value)}
+                        value="pro_training_contract_v1"
+                        checked={form.documentType === 'pro_training_contract_v1'}
+                        onChange={() => update('documentType', 'pro_training_contract_v1')}
                         className="sr-only"
                       />
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          form.documentType === value
-                            ? 'border-brand-500'
-                            : 'border-gray-400'
+                          form.documentType === 'pro_training_contract_v1' ? 'border-brand-500' : 'border-gray-400'
                         }`}
                       >
-                        {form.documentType === value && (
+                        {form.documentType === 'pro_training_contract_v1' && (
                           <div className="w-2 h-2 rounded-full bg-brand-500" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-gray-900 text-sm">{displayLabel}</p>
-                          {isProDoc && (
-                            <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white leading-none">
-                              Pro
-                            </span>
-                          )}
+                          <p className="font-medium text-gray-900 text-sm">委託契約書（章立て版）</p>
+                          <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white leading-none">
+                            Pro
+                          </span>
                         </div>
-                        {description && (
-                          <p className="text-xs text-gray-400 mt-0.5">{description}</p>
-                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">第1章〜と章立てされた網羅的な構成</p>
                       </div>
                     </label>
-                  );
-                })
-              }
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowProHint((v) => !v)}
+                      className="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-100 bg-gray-50 w-full text-left cursor-pointer transition-colors hover:border-gray-200"
+                    >
+                      <Lock size={16} className="text-gray-300 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-gray-400 text-sm">委託契約書（章立て版）</p>
+                          <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-300 text-white leading-none">
+                            Pro
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">第1章〜と章立てされた網羅的な構成</p>
+                        {showProHint && (
+                          <p className="text-xs text-brand-600 mt-1.5">
+                            章立て版はProプランでご利用いただけます。
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ── その他の書類（1カラム） ── */}
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  その他の書類
+                </p>
+                <div className="space-y-2">
+                  {(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][])
+                    .filter(([value]) => !PRO_ONLY_DOCUMENT_TYPES.has(value as DocumentType) && value !== 'training_contract')
+                    .map(([value, label]) => {
+                      const docType = value as DocumentType;
+                      const hasStructuredHint = STRUCTURED_HINT_TYPES.has(docType);
+
+                      return (
+                        <label
+                          key={value}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-colors ${
+                            form.documentType === value
+                              ? 'border-brand-500 bg-brand-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="documentType"
+                            value={value}
+                            checked={form.documentType === value}
+                            onChange={() => update('documentType', value)}
+                            className="sr-only"
+                          />
+                          <div
+                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                              form.documentType === value ? 'border-brand-500' : 'border-gray-400'
+                            }`}
+                          >
+                            {form.documentType === value && (
+                              <div className="w-2 h-2 rounded-full bg-brand-500" />
+                            )}
+                          </div>
+                          <span className="flex-1 text-sm font-medium text-gray-900">{label}</span>
+                          {hasStructuredHint && (
+                            <span className="text-[11px] text-gray-400 shrink-0">
+                              章立て版はご要望次第で追加予定
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* フィードバック誘導 */}
+              <p className="text-[11px] text-gray-400 pt-1">
+                章立て構成のテンプレート追加など、ご希望があれば
+                <Link
+                  href="/monitors"
+                  className="ml-1 underline underline-offset-2 hover:text-gray-600"
+                >
+                  フィードバックフォーム
+                </Link>
+                からお知らせください。
+              </p>
             </div>
           )}
 
