@@ -12,6 +12,7 @@ import {
   type TrainerFormData,
   type StructuredSpecialTerms,
   type LiabilityWaiverFormData,
+  type MembershipFormData,
 } from '@/types';
 import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -38,6 +39,13 @@ const LIABILITY_WAIVER_STEPS = [
   { id: 4, label: '同意事項の確認', icon: StickyNote },
 ];
 
+const MEMBERSHIP_FORM_STEPS = [
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'お客様情報', icon: User },
+  { id: 4, label: '申込内容', icon: Briefcase },
+];
+
 const defaultWaiverValues: Partial<LiabilityWaiverFormData> = {
   service_items: [],
   delivery_mode_status: '',
@@ -48,6 +56,38 @@ const defaultWaiverValues: Partial<LiabilityWaiverFormData> = {
   liability_consent_status: '',
   minor_status: '18歳以上です',
   guardian_name: '',
+  special_notes: '',
+  consent_confirmed: [],
+  signed_date: '',
+};
+
+const defaultMembershipValues: Partial<MembershipFormData> = {
+  client_name: '',
+  client_kana: '',
+  date_of_birth: '',
+  gender_status: '',
+  client_address: '',
+  client_phone: '',
+  client_email: '',
+  client_affiliation: '',
+  emergency_contact_name: '',
+  emergency_contact_relation: '',
+  emergency_contact_phone: '',
+  membership_plan: '',
+  membership_plan_detail: '',
+  start_date: '',
+  payment_method_status: '',
+  payment_method_detail: '',
+  preferred_days_items: [],
+  preferred_time_detail: '',
+  training_purpose_items: [],
+  training_goal_detail: '',
+  terms_consent_status: [],
+  privacy_consent_status: [],
+  contact_permission_status: '',
+  minor_status: '18歳以上です',
+  guardian_name: '',
+  guardian_phone: '',
   special_notes: '',
   consent_confirmed: [],
   signed_date: '',
@@ -242,12 +282,72 @@ function SimpleRadioGroup({
   );
 }
 
+// ── チェックボックスグループ（入会申込書固有フィールド用）────────────────────────
+
+function SimpleCheckboxGroup({
+  label,
+  description,
+  options,
+  values,
+  onChange,
+  required = false,
+}: {
+  label: string;
+  description?: string;
+  options: string[];
+  values: string[];
+  onChange: (option: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <p className="form-label mb-1">
+        {label}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
+      </p>
+      {description && (
+        <p className="text-xs text-gray-500 mb-2 leading-relaxed">{description}</p>
+      )}
+      <div className="space-y-1.5">
+        {options.map((opt) => {
+          const checked = values.includes(opt);
+          return (
+            <label
+              key={opt}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
+                checked
+                  ? 'border-brand-500 bg-brand-50 text-brand-700'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <input type="checkbox" className="sr-only" checked={checked} onChange={() => onChange(opt)} />
+              <span
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                  checked ? 'border-brand-500 bg-brand-500' : 'border-gray-300'
+                }`}
+              >
+                {checked && (
+                  <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                    <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+              <span>{opt}</span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── メインコンポーネント ─────────────────────────────────────
 
 export default function TrainerForm({ isSubscribed = false, isPro = false }: { isSubscribed?: boolean; isPro?: boolean }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
   const [liabilityWaiverData, setLiabilityWaiverData] = useState<Partial<LiabilityWaiverFormData>>(defaultWaiverValues);
+  const [membershipFormData, setMembershipFormData] = useState<Partial<MembershipFormData>>(defaultMembershipValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
   const [showProHint, setShowProHint] = useState(false);
@@ -258,7 +358,12 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
 
   const isGenerating = generationStep > 0;
   const isLiabilityWaiver = form.documentType === 'liability_waiver';
-  const STEPS = isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS;
+  const isMembershipForm = form.documentType === 'membership_form';
+  const STEPS = isLiabilityWaiver
+    ? LIABILITY_WAIVER_STEPS
+    : isMembershipForm
+    ? MEMBERSHIP_FORM_STEPS
+    : DEFAULT_STEPS;
   const totalSteps = STEPS.length;
 
   const clearStepTimers = () => {
@@ -274,7 +379,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
 
   const handleDocumentTypeChange = (docType: string) => {
     update('documentType', docType);
-    if (step > (docType === 'liability_waiver' ? 4 : 5)) setStep(1);
+    const maxStep = (docType === 'liability_waiver' || docType === 'membership_form') ? 4 : 5;
+    if (step > maxStep) setStep(1);
   };
 
   const updateSpecialTerms = (field: keyof StructuredSpecialTerms, value: string | undefined) => {
@@ -286,6 +392,46 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
 
   const updateWaiver = <K extends keyof LiabilityWaiverFormData>(field: K, value: LiabilityWaiverFormData[K]) => {
     setLiabilityWaiverData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateMembership = <K extends keyof MembershipFormData>(field: K, value: MembershipFormData[K]) => {
+    setMembershipFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleMembershipCheckbox = (
+    field: 'preferred_days_items' | 'training_purpose_items' | 'terms_consent_status' | 'privacy_consent_status' | 'consent_confirmed',
+    option: string
+  ) => {
+    setMembershipFormData((prev) => {
+      const current = (prev[field] as string[]) ?? [];
+      const next = current.includes(option) ? current.filter((v) => v !== option) : [...current, option];
+      return { ...prev, [field]: next };
+    });
+  };
+
+  const validateMembershipFormStep = (): string | null => {
+    const m = membershipFormData;
+    if (!m.client_name?.trim()) return '氏名を入力してください';
+    if (!m.client_kana?.trim()) return '氏名（カナ）を入力してください';
+    if (!m.date_of_birth) return '生年月日を入力してください';
+    if (!m.client_address?.trim()) return '住所を入力してください';
+    if (!m.client_phone?.trim()) return '電話番号を入力してください';
+    if (!m.client_email?.trim()) return 'メールアドレスを入力してください';
+    if (!m.emergency_contact_name?.trim()) return '緊急連絡先のお名前を入力してください';
+    if (!m.emergency_contact_relation?.trim()) return '緊急連絡先の続柄を入力してください';
+    if (!m.emergency_contact_phone?.trim()) return '緊急連絡先の電話番号を入力してください';
+    if (!m.membership_plan) return 'ご希望プランを選択してください';
+    if (m.membership_plan === 'その他' && !m.membership_plan_detail?.trim()) return 'プラン詳細を入力してください';
+    if (!m.start_date) return 'ご利用開始希望日を選択してください';
+    if (!m.payment_method_status) return 'お支払い方法を選択してください';
+    if (m.payment_method_status === 'その他' && !m.payment_method_detail?.trim()) return 'お支払い詳細を入力してください';
+    if (!m.minor_status) return '年齢確認を選択してください';
+    if (m.minor_status === '18歳未満です' && !m.guardian_name?.trim()) return '保護者氏名を入力してください';
+    if (m.minor_status === '18歳未満です' && !m.guardian_phone?.trim()) return '保護者電話番号を入力してください';
+    if (!m.terms_consent_status?.length) return '会員規約への同意が必要です';
+    if (!m.privacy_consent_status?.length) return '個人情報の取り扱いへの同意が必要です';
+    if (!m.consent_confirmed?.length) return '最終確認のチェックが必要です';
+    return null;
   };
 
   const toggleWaiverCheckbox = (field: 'service_items' | 'consent_confirmed', option: string) => {
@@ -319,6 +465,10 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       const validationError = validateLiabilityWaiverStep();
       if (validationError) { setError(validationError); return; }
     }
+    if (isMembershipForm) {
+      const validationError = validateMembershipFormStep();
+      if (validationError) { setError(validationError); return; }
+    }
 
     setGenerationStep(1);
     step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
@@ -328,6 +478,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       const requestBody: TrainerFormData = {
         ...form,
         liabilityWaiverData: isLiabilityWaiver ? (liabilityWaiverData as LiabilityWaiverFormData) : undefined,
+        membershipFormData: isMembershipForm ? (membershipFormData as MembershipFormData) : undefined,
       };
 
       const res = await fetch('/api/documents/generate', {
@@ -355,7 +506,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     <div className="max-w-2xl mx-auto">
       {/* Step indicators */}
       <div className="flex items-center justify-between mb-8">
-        {(isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS).map((s, i) => (
+        {STEPS.map((s, i) => (
           <div key={s.id} className="flex items-center flex-1">
             <button
               onClick={() => s.id < step && setStep(s.id)}
@@ -380,7 +531,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                 {s.label}
               </span>
             </button>
-            {i < (isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS).length - 1 && (
+            {i < STEPS.length - 1 && (
               <div
                 className={`flex-1 h-0.5 mx-2 transition-colors ${
                   step > s.id ? 'bg-green-400' : 'bg-gray-200'
@@ -394,7 +545,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-gray-900">
-            {(isLiabilityWaiver ? LIABILITY_WAIVER_STEPS : DEFAULT_STEPS)[step - 1].label}
+            {STEPS[step - 1].label}
           </h2>
         </CardHeader>
         <CardBody>
@@ -615,8 +766,115 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {/* Step 3: クライアント情報 */}
-          {step === 3 && (
+          {/* Step 3: お客様情報（入会申込書専用） */}
+          {step === 3 && isMembershipForm && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="氏名"
+                  value={membershipFormData.client_name ?? ''}
+                  onChange={(e) => updateMembership('client_name', e.target.value)}
+                  placeholder="田中 花子"
+                  required
+                />
+                <Input
+                  label="氏名（カナ）"
+                  value={membershipFormData.client_kana ?? ''}
+                  onChange={(e) => updateMembership('client_kana', e.target.value)}
+                  placeholder="タナカ ハナコ"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="生年月日"
+                  type="date"
+                  value={membershipFormData.date_of_birth ?? ''}
+                  onChange={(e) => updateMembership('date_of_birth', e.target.value)}
+                  required
+                />
+                <div>
+                  <label className="form-label">性別<span className="ml-1 text-xs font-normal text-gray-400">（任意）</span></label>
+                  <select
+                    value={membershipFormData.gender_status ?? ''}
+                    onChange={(e) => updateMembership('gender_status', e.target.value)}
+                    className="form-input"
+                  >
+                    <option value="">選択しない</option>
+                    <option>男性</option>
+                    <option>女性</option>
+                    <option>その他</option>
+                    <option>回答しない</option>
+                  </select>
+                </div>
+              </div>
+              <Input
+                label="住所"
+                value={membershipFormData.client_address ?? ''}
+                onChange={(e) => updateMembership('client_address', e.target.value)}
+                placeholder="東京都渋谷区〇〇 1-2-3"
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="電話番号"
+                  type="tel"
+                  value={membershipFormData.client_phone ?? ''}
+                  onChange={(e) => updateMembership('client_phone', e.target.value)}
+                  placeholder="090-0000-0000"
+                  required
+                />
+                <Input
+                  label="メールアドレス"
+                  type="email"
+                  value={membershipFormData.client_email ?? ''}
+                  onChange={(e) => updateMembership('client_email', e.target.value)}
+                  placeholder="client@example.com"
+                  required
+                />
+              </div>
+              <Input
+                label="ご所属（会社・学校等）"
+                value={membershipFormData.client_affiliation ?? ''}
+                onChange={(e) => updateMembership('client_affiliation', e.target.value)}
+                placeholder="〇〇株式会社"
+              />
+
+              {/* 緊急連絡先 */}
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-sm font-semibold text-gray-700 mb-3">緊急連絡先</p>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="お名前"
+                      value={membershipFormData.emergency_contact_name ?? ''}
+                      onChange={(e) => updateMembership('emergency_contact_name', e.target.value)}
+                      placeholder="田中 一郎"
+                      required
+                    />
+                    <Input
+                      label="続柄"
+                      value={membershipFormData.emergency_contact_relation ?? ''}
+                      onChange={(e) => updateMembership('emergency_contact_relation', e.target.value)}
+                      placeholder="父"
+                      required
+                    />
+                  </div>
+                  <Input
+                    label="電話番号"
+                    type="tel"
+                    value={membershipFormData.emergency_contact_phone ?? ''}
+                    onChange={(e) => updateMembership('emergency_contact_phone', e.target.value)}
+                    placeholder="090-0000-0000"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: クライアント情報（その他書類） */}
+          {step === 3 && !isMembershipForm && (
             <div className="space-y-4">
               <Input
                 label="クライアント氏名"
@@ -643,6 +901,207 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
                   required
                 />
               </div>
+            </div>
+          )}
+
+          {/* Step 4: 申込内容（入会申込書専用） */}
+          {step === 4 && isMembershipForm && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                ご契約内容・ご希望・各種同意をご記入ください。必須項目（<span className="text-red-500">*</span>）はすべて入力が必要です。
+              </p>
+
+              {/* ご契約内容 */}
+              <div className="space-y-4">
+                <SimpleRadioGroup
+                  label="ご希望プラン"
+                  options={['月4回プラン', '月8回プラン', '月12回プラン', '都度払い', 'その他']}
+                  value={membershipFormData.membership_plan ?? ''}
+                  onChange={(v) => updateMembership('membership_plan', v)}
+                  required
+                />
+                {membershipFormData.membership_plan === 'その他' && (
+                  <Input
+                    label="プラン詳細"
+                    value={membershipFormData.membership_plan_detail ?? ''}
+                    onChange={(e) => updateMembership('membership_plan_detail', e.target.value)}
+                    placeholder="ご希望のプラン内容をご記入ください"
+                    required
+                  />
+                )}
+                <Input
+                  label="ご利用開始希望日"
+                  type="date"
+                  value={membershipFormData.start_date ?? ''}
+                  onChange={(e) => updateMembership('start_date', e.target.value)}
+                  required
+                />
+                <SimpleRadioGroup
+                  label="お支払い方法"
+                  options={['銀行振込', 'クレジットカード', '現金払い', 'その他']}
+                  value={membershipFormData.payment_method_status ?? ''}
+                  onChange={(v) => updateMembership('payment_method_status', v)}
+                  required
+                />
+                {membershipFormData.payment_method_status === 'その他' && (
+                  <Input
+                    label="お支払い詳細"
+                    value={membershipFormData.payment_method_detail ?? ''}
+                    onChange={(e) => updateMembership('payment_method_detail', e.target.value)}
+                    placeholder="お支払い方法の詳細をご記入ください"
+                    required
+                  />
+                )}
+              </div>
+
+              {/* ご希望・目標 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="ご希望曜日"
+                  description="ご希望の曜日をすべて選択してください。"
+                  options={['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日', '不問']}
+                  values={membershipFormData.preferred_days_items ?? []}
+                  onChange={(opt) => toggleMembershipCheckbox('preferred_days_items', opt)}
+                />
+                <Input
+                  label="ご希望時間帯"
+                  value={membershipFormData.preferred_time_detail ?? ''}
+                  onChange={(e) => updateMembership('preferred_time_detail', e.target.value)}
+                  placeholder="例：午前中、18時以降"
+                />
+                <SimpleCheckboxGroup
+                  label="ご利用目的"
+                  description="当てはまるものをすべて選択してください。"
+                  options={['ダイエット・体重管理', '筋肉増量・ボディメイク', '体力・持久力の向上', '姿勢改善・体の歪み矯正', '健康維持・生活習慣改善', 'スポーツパフォーマンス向上', 'リハビリ・機能回復', 'その他']}
+                  values={membershipFormData.training_purpose_items ?? []}
+                  onChange={(opt) => toggleMembershipCheckbox('training_purpose_items', opt)}
+                />
+                <div>
+                  <label className="form-label">具体的な目標<span className="ml-1 text-xs font-normal text-gray-400">（任意）</span></label>
+                  <textarea
+                    value={membershipFormData.training_goal_detail ?? ''}
+                    onChange={(e) => updateMembership('training_goal_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：3ヶ月で5kg減量したい、フルマラソンを完走したい"
+                  />
+                </div>
+              </div>
+
+              {/* 各種同意 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="会員規約への同意"
+                  description="会員規約の内容を確認し、同意いただける場合はチェックを入れてください。"
+                  options={['会員規約の内容を確認し、同意します。']}
+                  values={membershipFormData.terms_consent_status ?? []}
+                  onChange={(opt) => toggleMembershipCheckbox('terms_consent_status', opt)}
+                  required
+                />
+                <SimpleCheckboxGroup
+                  label="個人情報の取り扱いへの同意"
+                  description="個人情報の利用目的・管理方法について同意いただける場合はチェックを入れてください。"
+                  options={['個人情報の取り扱いに関する説明を受け、同意します。']}
+                  values={membershipFormData.privacy_consent_status ?? []}
+                  onChange={(opt) => toggleMembershipCheckbox('privacy_consent_status', opt)}
+                  required
+                />
+                <SimpleRadioGroup
+                  label="連絡・広告についての許諾"
+                  description="キャンペーン情報やお知らせのご連絡を行う場合があります。"
+                  options={['許可します', '許可しません']}
+                  value={membershipFormData.contact_permission_status ?? ''}
+                  onChange={(v) => updateMembership('contact_permission_status', v)}
+                />
+              </div>
+
+              {/* 年齢確認・保護者 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleRadioGroup
+                  label="年齢確認"
+                  description="18歳未満の場合は保護者の同意が必要です。"
+                  options={['18歳以上です', '18歳未満です']}
+                  value={membershipFormData.minor_status ?? '18歳以上です'}
+                  onChange={(v) => updateMembership('minor_status', v as MembershipFormData['minor_status'])}
+                  required
+                />
+                {membershipFormData.minor_status === '18歳未満です' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="保護者氏名"
+                      value={membershipFormData.guardian_name ?? ''}
+                      onChange={(e) => updateMembership('guardian_name', e.target.value)}
+                      placeholder="山田 一郎"
+                      required
+                    />
+                    <Input
+                      label="保護者電話番号"
+                      type="tel"
+                      value={membershipFormData.guardian_phone ?? ''}
+                      onChange={(e) => updateMembership('guardian_phone', e.target.value)}
+                      placeholder="090-0000-0000"
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 備考・署名 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="form-label">備考・特記事項<span className="ml-1 text-xs font-normal text-gray-400">（任意）</span></label>
+                  <textarea
+                    value={membershipFormData.special_notes ?? ''}
+                    onChange={(e) => updateMembership('special_notes', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="トレーナーに事前に伝えておきたいことがあればご記入ください。"
+                  />
+                </div>
+                <Input
+                  label="申込日"
+                  type="date"
+                  value={membershipFormData.signed_date ?? ''}
+                  onChange={(e) => updateMembership('signed_date', e.target.value)}
+                />
+              </div>
+
+              {/* 最終同意 */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={(membershipFormData.consent_confirmed ?? []).length > 0}
+                    onChange={() => toggleMembershipCheckbox('consent_confirmed', '本申込書の内容をすべて確認し、同意のうえ申し込みます。')}
+                  />
+                  <span
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      (membershipFormData.consent_confirmed ?? []).length > 0
+                        ? 'border-brand-500 bg-brand-500'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {(membershipFormData.consent_confirmed ?? []).length > 0 && (
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      本申込書の内容をすべて確認し、同意のうえ申し込みます。<span className="ml-0.5 text-red-500">*</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">この同意がないと書類を生成できません。</p>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -720,8 +1179,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {/* Step 4: 契約内容（免責同意書以外） */}
-          {step === 4 && !isLiabilityWaiver && (
+          {/* Step 4: 契約内容（免責同意書・入会申込書以外） */}
+          {step === 4 && !isLiabilityWaiver && !isMembershipForm && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
