@@ -143,7 +143,7 @@ export const MEMBERSHIP_FORM_FIELDS: MembershipFormFieldDef[] = [
     label: 'ご希望曜日',
     type: 'checkbox',
     options: ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日', '不問'],
-    required: true,
+    required: false,
     description: 'ご希望の曜日をすべて選択してください。',
   },
   {
@@ -169,7 +169,7 @@ export const MEMBERSHIP_FORM_FIELDS: MembershipFormFieldDef[] = [
       'リハビリ・機能回復',
       'その他',
     ],
-    required: true,
+    required: false,
     description: '当てはまるものをすべて選択してください。',
   },
   {
