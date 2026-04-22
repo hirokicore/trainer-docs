@@ -13,6 +13,7 @@ import {
   type StructuredSpecialTerms,
   type LiabilityWaiverFormData,
   type MembershipFormData,
+  type CancellationPolicyFormData,
 } from '@/types';
 import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -45,6 +46,27 @@ const MEMBERSHIP_FORM_STEPS = [
   { id: 3, label: 'お客様情報', icon: User },
   { id: 4, label: '申込内容', icon: Briefcase },
 ];
+
+const CANCELLATION_POLICY_STEPS = [
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'クライアント情報', icon: User },
+  { id: 4, label: 'ポリシー同意', icon: StickyNote },
+];
+
+const defaultCancellationPolicyValues: Partial<CancellationPolicyFormData> = {
+  client_name: '',
+  signed_date: '',
+  cancellation_policy_read_status: [],
+  cancellation_deadline_detail: '',
+  cancellation_fee_detail: '',
+  refund_policy_status: '',
+  refund_policy_detail: '',
+  exception_cases_items: [],
+  exception_cases_detail: '',
+  policy_scope_items: [],
+  consent_confirmed: [],
+};
 
 const defaultWaiverValues: Partial<LiabilityWaiverFormData> = {
   service_items: [],
@@ -348,6 +370,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const [form, setForm] = useState<TrainerFormData>(defaultValues);
   const [liabilityWaiverData, setLiabilityWaiverData] = useState<Partial<LiabilityWaiverFormData>>(defaultWaiverValues);
   const [membershipFormData, setMembershipFormData] = useState<Partial<MembershipFormData>>(defaultMembershipValues);
+  const [cancellationPolicyData, setCancellationPolicyData] = useState<Partial<CancellationPolicyFormData>>(defaultCancellationPolicyValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
   const [showProHint, setShowProHint] = useState(false);
@@ -359,10 +382,13 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const isGenerating = generationStep > 0;
   const isLiabilityWaiver = form.documentType === 'liability_waiver';
   const isMembershipForm = form.documentType === 'membership_form';
+  const isCancellationPolicy = form.documentType === 'cancellation_policy';
   const STEPS = isLiabilityWaiver
     ? LIABILITY_WAIVER_STEPS
     : isMembershipForm
     ? MEMBERSHIP_FORM_STEPS
+    : isCancellationPolicy
+    ? CANCELLATION_POLICY_STEPS
     : DEFAULT_STEPS;
   const totalSteps = STEPS.length;
 
@@ -379,7 +405,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
 
   const handleDocumentTypeChange = (docType: string) => {
     update('documentType', docType);
-    const maxStep = (docType === 'liability_waiver' || docType === 'membership_form') ? 4 : 5;
+    const maxStep = ['liability_waiver', 'membership_form', 'cancellation_policy'].includes(docType) ? 4 : 5;
     if (step > maxStep) setStep(1);
   };
 
@@ -434,6 +460,31 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     return null;
   };
 
+  const updateCancellationPolicy = <K extends keyof CancellationPolicyFormData>(key: K, value: CancellationPolicyFormData[K]) => {
+    setCancellationPolicyData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const toggleCancellationPolicyCheckbox = (
+    key: 'cancellation_policy_read_status' | 'exception_cases_items' | 'policy_scope_items' | 'consent_confirmed',
+    option: string
+  ) => {
+    setCancellationPolicyData((prev) => {
+      const current = (prev[key] as string[]) ?? [];
+      const next = current.includes(option) ? current.filter((item) => item !== option) : [...current, option];
+      return { ...prev, [key]: next };
+    });
+  };
+
+  const validateCancellationPolicyStep = (): string | null => {
+    const c = cancellationPolicyData;
+    if (!c.client_name?.trim()) return '氏名を入力してください';
+    if (!c.signed_date) return '同意日を入力してください';
+    if (!c.refund_policy_status) return '返金に関する基本方針を選択してください';
+    if (!c.cancellation_policy_read_status?.length) return 'ポリシーの確認チェックが必要です';
+    if (!c.consent_confirmed?.length) return '最終同意のチェックが必要です';
+    return null;
+  };
+
   const toggleWaiverCheckbox = (field: 'service_items' | 'consent_confirmed', option: string) => {
     setLiabilityWaiverData((prev) => {
       const current = (prev[field] as string[]) ?? [];
@@ -469,6 +520,10 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       const validationError = validateMembershipFormStep();
       if (validationError) { setError(validationError); return; }
     }
+    if (isCancellationPolicy) {
+      const validationError = validateCancellationPolicyStep();
+      if (validationError) { setError(validationError); return; }
+    }
 
     setGenerationStep(1);
     step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
@@ -479,6 +534,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
         ...form,
         liabilityWaiverData: isLiabilityWaiver ? (liabilityWaiverData as LiabilityWaiverFormData) : undefined,
         membershipFormData: isMembershipForm ? (membershipFormData as MembershipFormData) : undefined,
+        cancellationPolicyData: isCancellationPolicy ? (cancellationPolicyData as CancellationPolicyFormData) : undefined,
       };
 
       const res = await fetch('/api/documents/generate', {
@@ -904,6 +960,170 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
+          {/* Step 4: ポリシー同意（キャンセル・返金ポリシー同意書専用） */}
+          {step === 4 && isCancellationPolicy && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                各項目を確認し、必須項目（<span className="text-red-500">*</span>）をすべて入力・選択してください。
+              </p>
+
+              {/* クライアント情報 */}
+              <div className="space-y-4">
+                <Input
+                  label="氏名（フルネーム）"
+                  value={cancellationPolicyData.client_name ?? ''}
+                  onChange={(e) => updateCancellationPolicy('client_name', e.target.value)}
+                  placeholder="田中 花子"
+                  required
+                />
+                <Input
+                  label="同意日"
+                  type="date"
+                  value={cancellationPolicyData.signed_date ?? ''}
+                  onChange={(e) => updateCancellationPolicy('signed_date', e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* ポリシー確認 */}
+              <div className="pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="キャンセル・返金ポリシーの確認"
+                  options={['キャンセル・返金ポリシーの内容を読み、理解しました。']}
+                  values={cancellationPolicyData.cancellation_policy_read_status ?? []}
+                  onChange={(opt) => toggleCancellationPolicyCheckbox('cancellation_policy_read_status', opt)}
+                  required
+                />
+              </div>
+
+              {/* キャンセルルール */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="form-label">
+                    キャンセル受付期限のルール
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={cancellationPolicyData.cancellation_deadline_detail ?? ''}
+                    onChange={(e) => updateCancellationPolicy('cancellation_deadline_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：予約日時の24時間前までのご連絡でキャンセル料無料"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">
+                    キャンセル料に関するルール
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={cancellationPolicyData.cancellation_fee_detail ?? ''}
+                    onChange={(e) => updateCancellationPolicy('cancellation_fee_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：前日は料金の50％、当日は100％、無断キャンセルは1回分消化"
+                  />
+                </div>
+              </div>
+
+              {/* 返金ポリシー */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleRadioGroup
+                  label="返金に関する基本方針"
+                  options={['原則として返金は行いません', '所定の条件を満たす場合のみ一部返金を行います']}
+                  value={cancellationPolicyData.refund_policy_status ?? ''}
+                  onChange={(v) => updateCancellationPolicy('refund_policy_status', v)}
+                  required
+                />
+                <div>
+                  <label className="form-label">
+                    返金対象となるケース
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={cancellationPolicyData.refund_policy_detail ?? ''}
+                    onChange={(e) => updateCancellationPolicy('refund_policy_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：長期プランの途中解約、病気や怪我による継続不能など"
+                  />
+                </div>
+              </div>
+
+              {/* 例外条件 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="キャンセル料が免除される例外条件"
+                  description="免除の対象となる例外条件をすべて選択してください。"
+                  options={['医師の診断書がある病気・怪我の場合', '天災・交通機関の大幅な乱れの場合', 'その他、当社がやむを得ないと認める場合']}
+                  values={cancellationPolicyData.exception_cases_items ?? []}
+                  onChange={(opt) => toggleCancellationPolicyCheckbox('exception_cases_items', opt)}
+                />
+                <div>
+                  <label className="form-label">
+                    例外条件の補足
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={cancellationPolicyData.exception_cases_detail ?? ''}
+                    onChange={(e) => updateCancellationPolicy('exception_cases_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="具体例や運営の裁量について補足があればご記入ください。"
+                  />
+                </div>
+              </div>
+
+              {/* 適用範囲 */}
+              <div className="pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="本ポリシーの適用対象"
+                  description="本ポリシーが適用されるサービス種別をすべて選択してください。"
+                  options={['単発セッション', '回数券・パッケージプラン', 'オンライン指導']}
+                  values={cancellationPolicyData.policy_scope_items ?? []}
+                  onChange={(opt) => toggleCancellationPolicyCheckbox('policy_scope_items', opt)}
+                />
+              </div>
+
+              {/* 最終同意 */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={(cancellationPolicyData.consent_confirmed ?? []).length > 0}
+                    onChange={() => toggleCancellationPolicyCheckbox('consent_confirmed', '上記キャンセル・返金ポリシーを理解し、同意します。')}
+                  />
+                  <span
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      (cancellationPolicyData.consent_confirmed ?? []).length > 0
+                        ? 'border-brand-500 bg-brand-500'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {(cancellationPolicyData.consent_confirmed ?? []).length > 0 && (
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      上記キャンセル・返金ポリシーを理解し、同意します。<span className="ml-0.5 text-red-500">*</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">この同意がないと書類を生成できません。</p>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 4: 申込内容（入会申込書専用） */}
           {step === 4 && isMembershipForm && (
             <div className="space-y-6">
@@ -1179,8 +1399,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {/* Step 4: 契約内容（免責同意書・入会申込書以外） */}
-          {step === 4 && !isLiabilityWaiver && !isMembershipForm && (
+          {/* Step 4: 契約内容（免責同意書・入会申込書・キャンセルポリシー以外） */}
+          {step === 4 && !isLiabilityWaiver && !isMembershipForm && !isCancellationPolicy && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
