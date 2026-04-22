@@ -79,13 +79,16 @@ export async function POST(request: NextRequest) {
   }
 
   // ── バリデーション ──
+  // 入会申込書はクライアント名を membershipFormData.client_name から取得するため commonRequired から除外
+  const skipClientName = formData.documentType === 'membership_form';
   const commonRequired: (keyof TrainerFormData)[] = [
     'trainerName', 'businessName', 'address', 'phone', 'email',
-    'clientName', 'documentType',
+    'documentType',
+    ...(skipClientName ? [] : ['clientName' as const]),
   ];
-  // 免責同意書は契約固有フィールドを使わないためスキップ
+  // 免責同意書・入会申込書は契約固有フィールドを使わないためスキップ
   const contractRequired: (keyof TrainerFormData)[] =
-    formData.documentType === 'liability_waiver'
+    ['liability_waiver', 'membership_form'].includes(formData.documentType)
       ? []
       : ['contractStartDate', 'contractEndDate', 'sessionFee', 'sessionCount'];
 
@@ -123,7 +126,11 @@ export async function POST(request: NextRequest) {
     const content = await generateDocument(processedFormData);
     const durationMs = Date.now() - start;
 
-    const title = `${DOCUMENT_TYPE_LABELS[processedFormData.documentType]}（${processedFormData.clientName}）`;
+    const clientDisplayName =
+      processedFormData.documentType === 'membership_form'
+        ? (processedFormData.membershipFormData?.client_name ?? processedFormData.clientName)
+        : processedFormData.clientName;
+    const title = `${DOCUMENT_TYPE_LABELS[processedFormData.documentType]}（${clientDisplayName}）`;
 
     const { data, error } = await supabase
       .from('documents')

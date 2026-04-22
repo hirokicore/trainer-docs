@@ -109,6 +109,72 @@ export interface LiabilityWaiverFormData {
   signed_date: string;
 }
 
+// ──────────────────────────────────────────────
+// 入会申込書（フォーム固有データ）
+// ──────────────────────────────────────────────
+
+/** 入会申込書の書類固有フォームフィールド */
+export interface MembershipFormData {
+  /** 氏名 */
+  client_name: string;
+  /** 氏名（カナ） */
+  client_kana: string;
+  /** 生年月日（YYYY-MM-DD） */
+  date_of_birth: string;
+  /** 性別 */
+  gender_status?: string;
+  /** 住所 */
+  client_address: string;
+  /** 電話番号 */
+  client_phone: string;
+  /** メールアドレス */
+  client_email: string;
+  /** 所属（会社・学校等、任意） */
+  client_affiliation?: string;
+  /** 緊急連絡先：氏名 */
+  emergency_contact_name: string;
+  /** 緊急連絡先：続柄 */
+  emergency_contact_relation: string;
+  /** 緊急連絡先：電話番号 */
+  emergency_contact_phone: string;
+  /** 希望プラン */
+  membership_plan: string;
+  /** プラン詳細（任意） */
+  membership_plan_detail?: string;
+  /** ご利用開始希望日（YYYY-MM-DD） */
+  start_date: string;
+  /** お支払い方法 */
+  payment_method_status: string;
+  /** お支払い詳細（任意） */
+  payment_method_detail?: string;
+  /** 希望曜日（複数選択） */
+  preferred_days_items: string[];
+  /** 希望時間帯（任意） */
+  preferred_time_detail?: string;
+  /** 利用目的（複数選択） */
+  training_purpose_items: string[];
+  /** 具体的な目標（任意） */
+  training_goal_detail?: string;
+  /** 会員規約への同意 */
+  terms_consent_status: string[];
+  /** 個人情報の取り扱いへの同意 */
+  privacy_consent_status: string[];
+  /** 連絡・広告についての許諾（任意） */
+  contact_permission_status?: string;
+  /** 未成年かどうか */
+  minor_status: '18歳以上です' | '18歳未満です';
+  /** 保護者氏名（未成年の場合のみ） */
+  guardian_name?: string;
+  /** 保護者電話番号（未成年の場合のみ） */
+  guardian_phone?: string;
+  /** 備考・特記事項（任意） */
+  special_notes?: string;
+  /** 最終同意チェック */
+  consent_confirmed: string[];
+  /** 署名日（YYYY-MM-DD） */
+  signed_date?: string;
+}
+
 export interface TrainerFormData {
   // トレーナー情報
   trainerName: string;
@@ -142,6 +208,8 @@ export interface TrainerFormData {
 
   /** 免責同意書固有フォームデータ */
   liabilityWaiverData?: LiabilityWaiverFormData;
+  /** 入会申込書固有フォームデータ */
+  membershipFormData?: MembershipFormData;
 }
 
 export interface Document {

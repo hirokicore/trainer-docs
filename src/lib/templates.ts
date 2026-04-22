@@ -38,7 +38,7 @@
  *   {{notes}}             = {{specialNotes}}
  */
 
-import type { TrainerFormData, LiabilityWaiverFormData } from '@/types';
+import type { TrainerFormData, LiabilityWaiverFormData, MembershipFormData } from '@/types';
 
 // ──────────────────────────────────────────────
 // 内部ユーティリティ
@@ -505,6 +505,178 @@ const LIABILITY_WAIVER_GUARDIAN_BLOCK = `
 
 保護者氏名（自署）：{{guardian_name}}
 日付：{{signed_date}}`;
+
+// ──────────────────────────────────────────────
+// 入会申込書
+// ──────────────────────────────────────────────
+
+/**
+ * 入会申込書テンプレート。
+ *
+ * 変数一覧:
+ *   {{document_number}}             - 書類番号（自動生成）
+ *   {{business_name}}               - 事業者名
+ *   {{trainer_name}}                - 担当トレーナー名
+ *   {{signed_date}}                 - 申込日
+ *   {{client_name}}                 - 氏名
+ *   {{client_kana}}                 - 氏名（カナ）
+ *   {{date_of_birth}}               - 生年月日
+ *   {{gender_status}}               - 性別
+ *   {{client_address}}              - 住所
+ *   {{client_phone}}                - 電話番号
+ *   {{client_email}}                - メールアドレス
+ *   {{client_affiliation}}          - 所属
+ *   {{emergency_contact_name}}      - 緊急連絡先：氏名
+ *   {{emergency_contact_relation}}  - 緊急連絡先：続柄
+ *   {{emergency_contact_phone}}     - 緊急連絡先：電話番号
+ *   {{membership_plan}}             - 希望プラン
+ *   {{membership_plan_detail}}      - プラン詳細
+ *   {{start_date}}                  - 利用開始希望日
+ *   {{payment_method_status}}       - 支払い方法
+ *   {{payment_method_detail}}       - 支払い詳細
+ *   {{preferred_days_items}}        - 希望曜日（「、」区切り）
+ *   {{preferred_time_detail}}       - 希望時間帯
+ *   {{training_purpose_items}}      - 利用目的（「、」区切り）
+ *   {{training_goal_detail}}        - 具体的な目標
+ *   {{terms_consent_status}}        - 会員規約同意
+ *   {{privacy_consent_status}}      - 個人情報同意
+ *   {{contact_permission_status}}   - 連絡・広告許諾
+ *   {{guardian_block}}              - 保護者同意セクション（未成年時のみ展開、空文字でも可）
+ *   {{special_notes}}               - 備考・特記事項
+ *   {{consent_confirmed}}           - 最終同意
+ */
+const MEMBERSHIP_FORM_TEMPLATE = `
+入会申込書
+書類番号：{{document_number}}　申込日：{{signed_date}}
+
+事業者名：{{business_name}}
+担当トレーナー：{{trainer_name}}
+
+---
+
+■ お客様情報
+
+氏名：{{client_name}}
+氏名（カナ）：{{client_kana}}
+生年月日：{{date_of_birth}}
+性別：{{gender_status}}
+ご住所：{{client_address}}
+電話番号：{{client_phone}}
+メールアドレス：{{client_email}}
+ご所属（会社・学校等）：{{client_affiliation}}
+
+---
+
+■ 緊急連絡先
+
+お名前：{{emergency_contact_name}}
+続柄：{{emergency_contact_relation}}
+電話番号：{{emergency_contact_phone}}
+
+---
+
+■ ご契約内容
+
+ご希望プラン：{{membership_plan}}
+プラン詳細：{{membership_plan_detail}}
+ご利用開始希望日：{{start_date}}
+お支払い方法：{{payment_method_status}}
+お支払い詳細：{{payment_method_detail}}
+ご希望曜日：{{preferred_days_items}}
+ご希望時間帯：{{preferred_time_detail}}
+
+---
+
+■ トレーニング目的・目標
+
+ご利用目的：{{training_purpose_items}}
+具体的な目標：{{training_goal_detail}}
+
+---
+
+■ 各種同意
+
+会員規約への同意：{{terms_consent_status}}
+個人情報の取り扱いへの同意：{{privacy_consent_status}}
+連絡・広告についての許諾：{{contact_permission_status}}{{guardian_block}}
+
+---
+
+■ 備考・特記事項
+
+{{special_notes}}
+
+---
+
+■ 最終確認
+
+{{consent_confirmed}}
+
+申込者氏名（自署）：{{client_name}}
+日付：{{signed_date}}
+
+担当トレーナー：{{trainer_name}}
+事業者名：{{business_name}}
+`.trim();
+
+/**
+ * 入会申込書テンプレートを適用してドキュメント文字列を生成する。
+ *
+ * - preferred_days_items / training_purpose_items（checkbox）は「、」区切りで結合
+ * - minor_status が「18歳未満です」の場合のみ {{guardian_block}} に保護者同意セクションを展開
+ * - 共通変数（businessName / trainerName）は TrainerFormData から取得
+ * - 書類固有変数は formData.membershipFormData から取得
+ */
+export function applyMembershipFormTemplate(formData: TrainerFormData): string {
+  const m: Partial<MembershipFormData> = formData.membershipFormData ?? {};
+
+  const joinItems = (arr: string[] | undefined): string =>
+    Array.isArray(arr) && arr.length > 0 ? arr.join('、') : '（未選択）';
+
+  const signedDateLabel = m.signed_date ? formatDateJP(m.signed_date) : todayJP();
+  const dobLabel        = m.date_of_birth ? formatDateJP(m.date_of_birth) : '（未入力）';
+  const startDateLabel  = m.start_date    ? formatDateJP(m.start_date)    : '（未入力）';
+
+  const isMinor = m.minor_status === '18歳未満です';
+  const guardianBlock = isMinor
+    ? `\n\n---\n\n■ 保護者同意（未成年の方のみ）\n\n18歳未満のお客様がご利用される場合、保護者の方のご同意が必要です。\n\n保護者氏名（自署）：${m.guardian_name?.trim() || '（記入欄）'}\n保護者電話番号：${m.guardian_phone?.trim() || '（記入欄）'}`
+    : '';
+
+  const vars: Record<string, string> = {
+    document_number:             generateContractNumber(),
+    business_name:               formData.businessName,
+    trainer_name:                formData.trainerName,
+    signed_date:                 signedDateLabel,
+    client_name:                 m.client_name                ?? formData.clientName,
+    client_kana:                 m.client_kana                ?? '（未入力）',
+    date_of_birth:               dobLabel,
+    gender_status:               m.gender_status              || '（未選択）',
+    client_address:              m.client_address             ?? '（未入力）',
+    client_phone:                m.client_phone               ?? '（未入力）',
+    client_email:                m.client_email               ?? '（未入力）',
+    client_affiliation:          m.client_affiliation         || 'なし',
+    emergency_contact_name:      m.emergency_contact_name     ?? '（未入力）',
+    emergency_contact_relation:  m.emergency_contact_relation ?? '（未入力）',
+    emergency_contact_phone:     m.emergency_contact_phone    ?? '（未入力）',
+    membership_plan:             m.membership_plan            ?? '（未選択）',
+    membership_plan_detail:      m.membership_plan_detail     || 'なし',
+    start_date:                  startDateLabel,
+    payment_method_status:       m.payment_method_status      ?? '（未選択）',
+    payment_method_detail:       m.payment_method_detail      || 'なし',
+    preferred_days_items:        joinItems(m.preferred_days_items),
+    preferred_time_detail:       m.preferred_time_detail      || 'なし',
+    training_purpose_items:      joinItems(m.training_purpose_items),
+    training_goal_detail:        m.training_goal_detail       || 'なし',
+    terms_consent_status:        joinItems(m.terms_consent_status),
+    privacy_consent_status:      joinItems(m.privacy_consent_status),
+    contact_permission_status:   m.contact_permission_status  || '（未回答）',
+    guardian_block:              guardianBlock,
+    special_notes:               m.special_notes?.trim()      || 'なし',
+    consent_confirmed:           joinItems(m.consent_confirmed),
+  };
+
+  return MEMBERSHIP_FORM_TEMPLATE.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? `{{${key}}}`);
+}
 
 /**
  * 免責同意書テンプレートを適用してドキュメント文字列を生成する。
