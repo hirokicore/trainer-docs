@@ -110,6 +110,36 @@ export interface LiabilityWaiverFormData {
 }
 
 // ──────────────────────────────────────────────
+// キャンセル・返金ポリシー同意書（フォーム固有データ）
+// ──────────────────────────────────────────────
+
+/** キャンセル・返金ポリシー同意書の書類固有フォームフィールド */
+export interface CancellationPolicyFormData {
+  /** クライアント氏名 */
+  client_name: string;
+  /** 同意日（YYYY-MM-DD） */
+  signed_date: string;
+  /** ポリシー確認チェック */
+  cancellation_policy_read_status: string[];
+  /** キャンセル受付期限のルール（任意） */
+  cancellation_deadline_detail?: string;
+  /** キャンセル料に関するルール（任意） */
+  cancellation_fee_detail?: string;
+  /** 返金に関する基本方針 */
+  refund_policy_status: string;
+  /** 返金対象となるケース（任意） */
+  refund_policy_detail?: string;
+  /** キャンセル料免除の例外条件（複数選択、任意） */
+  exception_cases_items?: string[];
+  /** 例外条件の補足（任意） */
+  exception_cases_detail?: string;
+  /** 本ポリシーの適用対象（複数選択、任意） */
+  policy_scope_items?: string[];
+  /** 最終同意チェック */
+  consent_confirmed: string[];
+}
+
+// ──────────────────────────────────────────────
 // 入会申込書（フォーム固有データ）
 // ──────────────────────────────────────────────
 
@@ -210,6 +240,8 @@ export interface TrainerFormData {
   liabilityWaiverData?: LiabilityWaiverFormData;
   /** 入会申込書固有フォームデータ */
   membershipFormData?: MembershipFormData;
+  /** キャンセル・返金ポリシー同意書固有フォームデータ */
+  cancellationPolicyData?: CancellationPolicyFormData;
 }
 
 export interface Document {

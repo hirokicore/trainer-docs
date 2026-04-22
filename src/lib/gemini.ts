@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TrainerFormData, DOCUMENT_TYPE_LABELS, DocumentType } from '@/types';
-import { applyTemplate, applyLiabilityWaiverTemplate, applyMembershipFormTemplate, TRAINING_CONTRACT_TEMPLATE_MAP } from '@/lib/templates';
+import { applyTemplate, applyLiabilityWaiverTemplate, applyMembershipFormTemplate, applyCancellationPolicyTemplate, TRAINING_CONTRACT_TEMPLATE_MAP } from '@/lib/templates';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -118,6 +118,7 @@ ${trimmed}
 export function getGenerationEngine(documentType: DocumentType): 'gemini' | 'template_only' {
   if (documentType === 'liability_waiver') return 'template_only';
   if (documentType === 'membership_form') return 'template_only';
+  if (documentType === 'cancellation_policy') return 'template_only';
   return STATIC_TEMPLATE_MAP[documentType] ? 'template_only' : 'gemini';
 }
 
@@ -130,6 +131,11 @@ export async function generateDocument(formData: TrainerFormData): Promise<strin
   // 入会申込書: 固有フォームデータを使う専用テンプレートエンジン
   if (formData.documentType === 'membership_form') {
     return applyMembershipFormTemplate(formData);
+  }
+
+  // キャンセル・返金ポリシー同意書: 固有フォームデータを使う専用テンプレートエンジン
+  if (formData.documentType === 'cancellation_policy') {
+    return applyCancellationPolicyTemplate(formData);
   }
 
   // 委託契約書（標準版・Pro版）など静的テンプレートが登録されている場合

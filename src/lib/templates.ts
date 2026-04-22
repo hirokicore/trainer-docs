@@ -38,7 +38,7 @@
  *   {{notes}}             = {{specialNotes}}
  */
 
-import type { TrainerFormData, LiabilityWaiverFormData, MembershipFormData } from '@/types';
+import type { TrainerFormData, LiabilityWaiverFormData, MembershipFormData, CancellationPolicyFormData } from '@/types';
 
 // ──────────────────────────────────────────────
 // 内部ユーティリティ
@@ -717,4 +717,144 @@ export function applyLiabilityWaiverTemplate(formData: TrainerFormData): string 
   if (!isMinor) return mainBody;
 
   return mainBody + resolve(LIABILITY_WAIVER_GUARDIAN_BLOCK);
+}
+
+// ──────────────────────────────────────────────
+// キャンセル・返金ポリシー同意書
+// ──────────────────────────────────────────────
+
+/**
+ * キャンセル・返金ポリシー同意書テンプレート。
+ *
+ * 変数一覧:
+ *   {{document_number}}               - 書類番号（自動生成）
+ *   {{business_name}}                 - 事業者名
+ *   {{service_name}}                  - サービス名（businessName にフォールバック）
+ *   {{cancellation_deadline_detail}}  - キャンセル受付期限ルール
+ *   {{cancellation_fee_detail}}       - キャンセル料ルール
+ *   {{refund_policy_status}}          - 返金基本方針
+ *   {{refund_policy_detail}}          - 返金対象ケース（空の場合は空行）
+ *   {{exception_cases_items}}         - 免除例外条件（箇条書き、空の場合「特に定めなし」）
+ *   {{exception_cases_detail}}        - 例外条件補足（空の場合は空行）
+ *   {{policy_scope_items}}            - 適用対象（箇条書き、空の場合「特に定めなし」）
+ *   {{client_name}}                   - クライアント氏名
+ *   {{signed_date}}                   - 同意日
+ */
+const CANCELLATION_POLICY_TEMPLATE = `
+キャンセル・返金ポリシー同意書
+
+書類番号：{{document_number}}
+事業者名：{{business_name}}
+サービス名：{{service_name}}
+
+---
+
+はじめに
+
+本書は、{{service_name}}のご利用にあたり、予約のキャンセル・変更、途中解約、および返金に関するルールを事前にご確認・ご同意いただくための書類です。
+
+トラブルを未然に防ぎ、お客様と{{business_name}}の双方が安心してサービスを継続できるよう、以下のポリシーを定めています。ご不明な点があれば、署名前に担当トレーナーまでお気軽にご確認ください。
+
+---
+
+■ キャンセル・変更のルール
+
+予約のキャンセルまたは変更をご希望の場合は、電話・メール・その他ご案内した方法にてご連絡ください。
+
+【キャンセル受付期限】
+{{cancellation_deadline_detail}}
+
+期限内にご連絡いただいた場合は、原則としてキャンセル料は発生しません。
+
+【キャンセル料について】
+{{cancellation_fee_detail}}
+
+（個別のご案内がない場合の目安：前日キャンセルはセッション料金の50％、当日キャンセルおよび無断キャンセルは100％を申し受けます。無断キャンセルが続く場合、今後のご予約をお断りする場合があります。）
+
+---
+
+■ 返金ポリシー
+
+本サービスの返金に関する基本方針は以下のとおりです。
+
+{{refund_policy_status}}
+
+{{refund_policy_detail}}
+
+返金が発生する場合は、返金対象・計算方法・振込手数料の有無等について、契約時または申請時に個別にご説明いたします。
+
+---
+
+■ 例外的な免除・考慮について
+
+以下に該当する場合は、キャンセル料の免除または日程変更に応じる場合があります（保証するものではありません）。
+
+{{exception_cases_items}}
+
+{{exception_cases_detail}}
+
+免除の適用については、{{business_name}}の判断によるものとし、必要に応じて証明書類の提出をお願いする場合があります。
+
+---
+
+■ 本ポリシーの適用範囲
+
+本ポリシーは、以下のサービスに適用されます。
+
+{{policy_scope_items}}
+
+---
+
+■ 同意について
+
+キャンセル料・返金条件はお客様にとって不利益となる場合があります。本書の内容をよくお読みいただいたうえで、ご同意をお願いします。Web予約時または書面へのご署名をもって、本ポリシーに同意いただいたものとみなします。
+
+---
+
+私は、本書のキャンセル・返金ポリシーの内容をすべて読み、理解し、同意します。
+
+クライアント氏名（自署）：{{client_name}}
+日付：{{signed_date}}
+`.trim();
+
+/**
+ * キャンセル・返金ポリシー同意書テンプレートを適用してドキュメント文字列を生成する。
+ *
+ * - exception_cases_items / policy_scope_items（checkbox）は箇条書き（「・」＋改行）で展開
+ * - 任意テキスト項目が空の場合はデフォルト文言または空文字を設定
+ * - 共通変数（businessName / trainerName）は TrainerFormData から取得
+ * - 書類固有変数は formData.cancellationPolicyData から取得
+ */
+export function applyCancellationPolicyTemplate(formData: TrainerFormData): string {
+  const c: Partial<CancellationPolicyFormData> = formData.cancellationPolicyData ?? {};
+
+  const toBullets = (arr: string[] | undefined): string =>
+    Array.isArray(arr) && arr.length > 0
+      ? arr.map((item) => `・${item}`).join('\n')
+      : '（特に定めなし）';
+
+  const signedDateLabel = c.signed_date ? formatDateJP(c.signed_date) : todayJP();
+
+  const vars: Record<string, string> = {
+    document_number:              generateContractNumber(),
+    business_name:                formData.businessName,
+    service_name:                 formData.businessName,
+    client_name:                  c.client_name?.trim() || formData.clientName,
+    signed_date:                  signedDateLabel,
+    cancellation_deadline_detail: c.cancellation_deadline_detail?.trim()
+                                  || '（担当トレーナーよりご案内いたします）',
+    cancellation_fee_detail:      c.cancellation_fee_detail?.trim()
+                                  || '（担当トレーナーよりご案内いたします）',
+    refund_policy_status:         c.refund_policy_status?.trim()
+                                  || '（担当トレーナーよりご案内いたします）',
+    refund_policy_detail:         c.refund_policy_detail?.trim() || '',
+    exception_cases_items:        toBullets(c.exception_cases_items),
+    exception_cases_detail:       c.exception_cases_detail?.trim() || '',
+    policy_scope_items:           toBullets(c.policy_scope_items),
+  };
+
+  return CANCELLATION_POLICY_TEMPLATE.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key: string) => vars[key] ?? `{{${key}}}`
+  );
 }

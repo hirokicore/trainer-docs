@@ -79,16 +79,16 @@ export async function POST(request: NextRequest) {
   }
 
   // ── バリデーション ──
-  // 入会申込書はクライアント名を membershipFormData.client_name から取得するため commonRequired から除外
-  const skipClientName = formData.documentType === 'membership_form';
+  // 入会申込書・キャンセルポリシー同意書はクライアント名を書類固有データから取得するため commonRequired から除外
+  const skipClientName = ['membership_form', 'cancellation_policy'].includes(formData.documentType);
   const commonRequired: (keyof TrainerFormData)[] = [
     'trainerName', 'businessName', 'address', 'phone', 'email',
     'documentType',
     ...(skipClientName ? [] : ['clientName' as const]),
   ];
-  // 免責同意書・入会申込書は契約固有フィールドを使わないためスキップ
+  // 免責同意書・入会申込書・キャンセルポリシー同意書は契約固有フィールドを使わないためスキップ
   const contractRequired: (keyof TrainerFormData)[] =
-    ['liability_waiver', 'membership_form'].includes(formData.documentType)
+    ['liability_waiver', 'membership_form', 'cancellation_policy'].includes(formData.documentType)
       ? []
       : ['contractStartDate', 'contractEndDate', 'sessionFee', 'sessionCount'];
 
@@ -129,6 +129,8 @@ export async function POST(request: NextRequest) {
     const clientDisplayName =
       processedFormData.documentType === 'membership_form'
         ? (processedFormData.membershipFormData?.client_name ?? processedFormData.clientName)
+        : processedFormData.documentType === 'cancellation_policy'
+        ? (processedFormData.cancellationPolicyData?.client_name ?? processedFormData.clientName)
         : processedFormData.clientName;
     const title = `${DOCUMENT_TYPE_LABELS[processedFormData.documentType]}（${clientDisplayName}）`;
 
