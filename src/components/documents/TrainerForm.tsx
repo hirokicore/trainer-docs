@@ -16,6 +16,7 @@ import {
   type CancellationPolicyFormData,
   type TerminationCoolingOffFormData,
   type EffectNonGuaranteeFormData,
+  type HealthCheckFormData,
 } from '@/types';
 import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +25,6 @@ import Link from 'next/link';
 const STRUCTURED_HINT_TYPES = new Set<DocumentType>([
   'liability_waiver',
   'cancellation_policy',
-  'health_check',
 ]);
 
 const DEFAULT_STEPS = [
@@ -70,6 +70,13 @@ const EFFECT_NON_GUARANTEE_STEPS = [
   { id: 4, label: '同意事項の確認', icon: StickyNote },
 ];
 
+const HEALTH_CHECK_STEPS = [
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'クライアント情報', icon: User },
+  { id: 4, label: '健康状態の記入', icon: StickyNote },
+];
+
 const defaultCancellationPolicyValues: Partial<CancellationPolicyFormData> = {
   client_name: '',
   signed_date: '',
@@ -81,6 +88,29 @@ const defaultCancellationPolicyValues: Partial<CancellationPolicyFormData> = {
   exception_cases_items: [],
   exception_cases_detail: '',
   policy_scope_items: [],
+  consent_confirmed: [],
+};
+
+const defaultHealthCheckValues: Partial<HealthCheckFormData> = {
+  client_name: '',
+  signed_date: '',
+  current_treatment_status: '',
+  current_treatment_detail: '',
+  past_illness_status: '',
+  past_illness_detail: '',
+  medication_status: '',
+  medication_detail: '',
+  doctor_restriction_status: '',
+  doctor_restriction_detail: '',
+  exercise_experience_status: '',
+  exercise_experience_detail: '',
+  injury_history_status: '',
+  injury_history_detail: '',
+  other_health_notes: '',
+  emergency_contact_name: '',
+  emergency_contact_relationship: '',
+  emergency_contact_phone: '',
+  health_declaration_confirmed: [],
   consent_confirmed: [],
 };
 
@@ -421,6 +451,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     useState<Partial<TerminationCoolingOffFormData>>(defaultTerminationCoolingOffValues);
   const [effectNonGuaranteeData, setEffectNonGuaranteeData] =
     useState<Partial<EffectNonGuaranteeFormData>>(defaultEffectNonGuaranteeValues);
+  const [healthCheckData, setHealthCheckData] =
+    useState<Partial<HealthCheckFormData>>(defaultHealthCheckValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
   const [showProHint, setShowProHint] = useState(false);
@@ -435,6 +467,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const isCancellationPolicy = form.documentType === 'cancellation_policy';
   const isTerminationCoolingOffPolicy = form.documentType === 'termination_coolingoff_policy';
   const isEffectNonGuaranteePolicy = form.documentType === 'effect_non_guarantee_policy';
+  const isHealthCheck = form.documentType === 'health_check';
   const STEPS = isLiabilityWaiver
     ? LIABILITY_WAIVER_STEPS
     : isMembershipForm
@@ -445,6 +478,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     ? TERMINATION_COOLINGOFF_STEPS
     : isEffectNonGuaranteePolicy
     ? EFFECT_NON_GUARANTEE_STEPS
+    : isHealthCheck
+    ? HEALTH_CHECK_STEPS
     : DEFAULT_STEPS;
   const totalSteps = STEPS.length;
 
@@ -461,7 +496,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
 
   const handleDocumentTypeChange = (docType: string) => {
     update('documentType', docType);
-    const maxStep = ['liability_waiver', 'membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy'].includes(docType) ? 4 : 5;
+    const maxStep = ['liability_waiver', 'membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy', 'health_check'].includes(docType) ? 4 : 5;
     if (step > maxStep) setStep(1);
   };
 
@@ -589,6 +624,39 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     });
   }
 
+  function updateHealthCheck<K extends keyof HealthCheckFormData>(key: K, value: HealthCheckFormData[K]) {
+    setHealthCheckData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleHealthCheckCheckbox(
+    key: keyof Pick<HealthCheckFormData, 'health_declaration_confirmed' | 'consent_confirmed'>,
+    option: string
+  ) {
+    setHealthCheckData((prev) => {
+      const current = (prev[key] as string[]) ?? [];
+      const exists = current.includes(option);
+      return { ...prev, [key]: exists ? current.filter((item) => item !== option) : [...current, option] };
+    });
+  }
+
+  const validateHealthCheckStep = (): string | null => {
+    const h = healthCheckData;
+    if (!h.client_name?.trim()) return '氏名を入力してください';
+    if (!h.signed_date) return '記入日を入力してください';
+    if (!h.current_treatment_status) return '現在の治療・通院状況を選択してください';
+    if (!h.past_illness_status) return '既往歴・手術歴の有無を選択してください';
+    if (!h.medication_status) return '服薬状況を選択してください';
+    if (!h.doctor_restriction_status) return '医師からの運動制限の有無を選択してください';
+    if (!h.exercise_experience_status) return '運動習慣を選択してください';
+    if (!h.injury_history_status) return 'ケガ・痛みの有無を選択してください';
+    if (!h.emergency_contact_name?.trim()) return '緊急連絡先のお名前を入力してください';
+    if (!h.emergency_contact_relationship?.trim()) return '緊急連絡先の続柄を入力してください';
+    if (!h.emergency_contact_phone?.trim()) return '緊急連絡先の電話番号を入力してください';
+    if (!h.health_declaration_confirmed?.length) return '申告内容の確認チェックが必要です';
+    if (!h.consent_confirmed?.length) return '最終同意のチェックが必要です';
+    return null;
+  };
+
   const validateEffectNonGuaranteeStep = (): string | null => {
     const e = effectNonGuaranteeData;
     if (!e.client_name?.trim()) return '氏名を入力してください';
@@ -660,6 +728,10 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       const validationError = validateEffectNonGuaranteeStep();
       if (validationError) { setError(validationError); return; }
     }
+    if (isHealthCheck) {
+      const validationError = validateHealthCheckStep();
+      if (validationError) { setError(validationError); return; }
+    }
 
     setGenerationStep(1);
     step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
@@ -679,6 +751,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
           isEffectNonGuaranteePolicy
             ? (effectNonGuaranteeData as EffectNonGuaranteeFormData)
             : undefined,
+        healthCheckData: isHealthCheck ? (healthCheckData as HealthCheckFormData) : undefined,
       };
 
       const res = await fetch('/api/documents/generate', {
@@ -1444,6 +1517,282 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
+          {/* Step 4: 健康状態確認書専用フォーム */}
+          {step === 4 && isHealthCheck && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                各項目を確認し、必須項目（<span className="text-red-500">*</span>）をすべて入力・選択してください。お答えにくい項目は差し支えない範囲で構いません。
+              </p>
+
+              {/* 基本情報 */}
+              <div className="space-y-4">
+                <Input
+                  label="氏名（フルネーム）"
+                  value={healthCheckData.client_name ?? ''}
+                  onChange={(e) => updateHealthCheck('client_name', e.target.value)}
+                  placeholder="田中 花子"
+                  required
+                />
+                <Input
+                  label="記入日"
+                  type="date"
+                  value={healthCheckData.signed_date ?? ''}
+                  onChange={(e) => updateHealthCheck('signed_date', e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* 健康状態 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-sm font-semibold text-gray-700">健康状態について</p>
+                <SimpleRadioGroup
+                  label="現在、治療中または通院中のご病気はありますか？"
+                  options={['はい', 'いいえ']}
+                  value={healthCheckData.current_treatment_status ?? ''}
+                  onChange={(v) => updateHealthCheck('current_treatment_status', v)}
+                  required
+                />
+                {healthCheckData.current_treatment_status === 'はい' && (
+                  <div>
+                    <label className="form-label">
+                      現在治療中・通院中の病名・症状・治療内容
+                      <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">医師から説明を受けている範囲で構いません。</p>
+                    <textarea
+                      value={healthCheckData.current_treatment_detail ?? ''}
+                      onChange={(e) => updateHealthCheck('current_treatment_detail', e.target.value)}
+                      className="form-input min-h-20 resize-y"
+                      maxLength={500}
+                      placeholder="例：高血圧で通院中、内服薬あり"
+                    />
+                  </div>
+                )}
+                <SimpleRadioGroup
+                  label="過去に大きなご病気や手術のご経験はありますか？"
+                  options={['はい', 'いいえ']}
+                  value={healthCheckData.past_illness_status ?? ''}
+                  onChange={(v) => updateHealthCheck('past_illness_status', v)}
+                  required
+                />
+                {healthCheckData.past_illness_status === 'はい' && (
+                  <div>
+                    <label className="form-label">
+                      主な既往歴・手術歴
+                      <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">心臓・呼吸器・脳・整形外科疾患など、運動に影響のあるものがあればご記入ください。</p>
+                    <textarea
+                      value={healthCheckData.past_illness_detail ?? ''}
+                      onChange={(e) => updateHealthCheck('past_illness_detail', e.target.value)}
+                      className="form-input min-h-20 resize-y"
+                      maxLength={500}
+                      placeholder="例：10年前に腰椎椎間板ヘルニアの手術を受けた"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 服薬・医師指示 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-sm font-semibold text-gray-700">服薬・医師からの指示</p>
+                <SimpleRadioGroup
+                  label="現在、常時または定期的に服用しているお薬はありますか？"
+                  options={['はい', 'いいえ']}
+                  value={healthCheckData.medication_status ?? ''}
+                  onChange={(v) => updateHealthCheck('medication_status', v)}
+                  required
+                />
+                {healthCheckData.medication_status === 'はい' && (
+                  <div>
+                    <label className="form-label">
+                      服用中のお薬の名称・目的
+                      <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">正式名称が分からない場合は「血圧の薬」など分かる範囲で構いません。</p>
+                    <textarea
+                      value={healthCheckData.medication_detail ?? ''}
+                      onChange={(e) => updateHealthCheck('medication_detail', e.target.value)}
+                      className="form-input min-h-20 resize-y"
+                      maxLength={500}
+                      placeholder="例：血圧の薬（アムロジピン）"
+                    />
+                  </div>
+                )}
+                <SimpleRadioGroup
+                  label="医師から運動・身体活動について制限や注意指示を受けていますか？"
+                  options={['はい', 'いいえ']}
+                  value={healthCheckData.doctor_restriction_status ?? ''}
+                  onChange={(v) => updateHealthCheck('doctor_restriction_status', v)}
+                  required
+                />
+                {healthCheckData.doctor_restriction_status === 'はい' && (
+                  <div>
+                    <label className="form-label">
+                      医師からの運動制限・注意事項
+                      <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                    </label>
+                    <textarea
+                      value={healthCheckData.doctor_restriction_detail ?? ''}
+                      onChange={(e) => updateHealthCheck('doctor_restriction_detail', e.target.value)}
+                      className="form-input min-h-20 resize-y"
+                      maxLength={500}
+                      placeholder="例：激しい有酸素運動は控えるように言われている"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 運動経験・ケガ */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-sm font-semibold text-gray-700">運動経験・ケガの歴</p>
+                <div>
+                  <label className="form-label">
+                    これまでの運動習慣について<span className="ml-0.5 text-red-500">*</span>
+                  </label>
+                  <select
+                    value={healthCheckData.exercise_experience_status ?? ''}
+                    onChange={(e) => updateHealthCheck('exercise_experience_status', e.target.value)}
+                    className="form-input"
+                  >
+                    <option value="">選択してください</option>
+                    <option>現在も定期的に運動している</option>
+                    <option>以前は運動していたが、ここ1年以上はほとんどしていない</option>
+                    <option>これまでほとんど運動習慣がない</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">
+                    これまでの主な運動経験
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">スポーツの種類や頻度などがあればご記入ください。</p>
+                  <textarea
+                    value={healthCheckData.exercise_experience_detail ?? ''}
+                    onChange={(e) => updateHealthCheck('exercise_experience_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：週2回ジムに通っていた、学生時代はサッカー部"
+                  />
+                </div>
+                <SimpleRadioGroup
+                  label="過去または現在、運動に影響するケガや痛みはありますか？"
+                  options={['はい', 'いいえ']}
+                  value={healthCheckData.injury_history_status ?? ''}
+                  onChange={(v) => updateHealthCheck('injury_history_status', v)}
+                  required
+                />
+                {healthCheckData.injury_history_status === 'はい' && (
+                  <div>
+                    <label className="form-label">
+                      ケガ・痛みの部位や状況
+                      <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                    </label>
+                    <textarea
+                      value={healthCheckData.injury_history_detail ?? ''}
+                      onChange={(e) => updateHealthCheck('injury_history_detail', e.target.value)}
+                      className="form-input min-h-20 resize-y"
+                      maxLength={500}
+                      placeholder="例：右膝の痛み、腰痛がある"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* その他の注意点 */}
+              <div className="pt-2 border-t border-gray-100">
+                <label className="form-label">
+                  その他、トレーニングにあたり事前に伝えておきたい健康上の注意点
+                  <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                </label>
+                <p className="text-xs text-gray-500 mb-2">アレルギー、睡眠、メンタルヘルスなど、配慮してほしい点があればご記入ください。</p>
+                <textarea
+                  value={healthCheckData.other_health_notes ?? ''}
+                  onChange={(e) => updateHealthCheck('other_health_notes', e.target.value)}
+                  className="form-input min-h-20 resize-y"
+                  maxLength={500}
+                  placeholder="例：花粉症があります、水泳は苦手です"
+                />
+              </div>
+
+              {/* 緊急連絡先 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-sm font-semibold text-gray-700">緊急連絡先</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="お名前"
+                    value={healthCheckData.emergency_contact_name ?? ''}
+                    onChange={(e) => updateHealthCheck('emergency_contact_name', e.target.value)}
+                    placeholder="田中 一郎"
+                    required
+                  />
+                  <Input
+                    label="続柄"
+                    value={healthCheckData.emergency_contact_relationship ?? ''}
+                    onChange={(e) => updateHealthCheck('emergency_contact_relationship', e.target.value)}
+                    placeholder="配偶者"
+                    required
+                  />
+                </div>
+                <Input
+                  label="電話番号"
+                  type="tel"
+                  value={healthCheckData.emergency_contact_phone ?? ''}
+                  onChange={(e) => updateHealthCheck('emergency_contact_phone', e.target.value)}
+                  placeholder="090-0000-0000"
+                  required
+                />
+              </div>
+
+              {/* 確認・同意 */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="申告内容に関する確認"
+                  options={['上記の申告内容は、現在把握している範囲で正確かつ誠実に記入しました。']}
+                  values={healthCheckData.health_declaration_confirmed ?? []}
+                  onChange={(opt) => toggleHealthCheckCheckbox('health_declaration_confirmed', opt)}
+                  required
+                />
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={(healthCheckData.consent_confirmed ?? []).length > 0}
+                    onChange={() => toggleHealthCheckCheckbox('consent_confirmed', '本健康状態確認書の内容を理解し、自己の判断と責任においてトレーニングに参加することに同意します。')}
+                  />
+                  <span
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      (healthCheckData.consent_confirmed ?? []).length > 0
+                        ? 'border-brand-500 bg-brand-500'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {(healthCheckData.consent_confirmed ?? []).length > 0 && (
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      本健康状態確認書の内容を理解し、自己の判断と責任においてトレーニングに参加することに同意します。<span className="ml-0.5 text-red-500">*</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">この同意がないと書類を生成できません。</p>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 4: 効果保証なし・個人差に関する同意書専用フォーム */}
           {step === 4 && isEffectNonGuaranteePolicy && (
             <div className="space-y-6">
@@ -1899,7 +2248,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
           )}
 
           {/* Step 4: 契約内容（免責同意書・入会申込書・キャンセルポリシー・途中解約同意書・効果保証なし同意書以外） */}
-          {step === 4 && !isLiabilityWaiver && !isMembershipForm && !isCancellationPolicy && !isTerminationCoolingOffPolicy && !isEffectNonGuaranteePolicy && (
+          {step === 4 && !isLiabilityWaiver && !isMembershipForm && !isCancellationPolicy && !isTerminationCoolingOffPolicy && !isEffectNonGuaranteePolicy && !isHealthCheck && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
