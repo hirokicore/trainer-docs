@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
   const { error } = await supabase.from('monitor_applications').insert({
     name: '匿名',
-    email: contact.trim() || '',
+    email: contact.trim() || `anon_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
     activity_status: usage_status.trim() || '未回答',
     message: message.trim(),
     status: 'feedback',
