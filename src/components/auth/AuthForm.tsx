@@ -40,9 +40,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           },
         });
         if (signUpError) throw signUpError;
-        setSuccess(
-          '確認メールを送信しました。メールボックスをご確認ください。'
-        );
+        setSuccess('registered');
       } else {
         const { data: loginData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -108,9 +106,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-700 font-medium">{success}</p>
-                <Link href="/auth/login" className="text-brand-600 text-sm mt-4 inline-block hover:underline">
-                  ログインページへ
+                <p className="text-gray-900 font-semibold text-lg">登録完了しました</p>
+                <p className="text-gray-500 text-sm mt-1">TrainerDocs をご利用いただけます</p>
+                <Link href="/dashboard">
+                  <Button variant="primary" size="lg" className="mt-6 w-full">
+                    マイページへ
+                  </Button>
                 </Link>
               </div>
             ) : (
