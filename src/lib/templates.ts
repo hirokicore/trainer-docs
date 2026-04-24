@@ -1154,7 +1154,12 @@ export const HEALTH_CHECK_TEMPLATE = `
 export function applyHealthCheckTemplate(formData: TrainerFormData): string {
   const h: Partial<HealthCheckFormData> = formData.healthCheckData ?? {};
 
-  const opt = (val: string | undefined) => val?.trim() || '特になし';
+  // status が「はい」で detail が空 → 「詳細未記入」、それ以外で空 → 「特になし」
+  const detail = (status: string | undefined, val: string | undefined): string => {
+    const trimmed = val?.trim();
+    if (trimmed) return trimmed;
+    return status === 'はい' ? '詳細未記入' : '特になし';
+  };
 
   const vars: Record<string, string> = {
     document_number:              generateContractNumber(),
@@ -1163,18 +1168,18 @@ export function applyHealthCheckTemplate(formData: TrainerFormData): string {
     client_name:                  h.client_name?.trim() || formData.clientName,
     signed_date:                  h.signed_date ? formatDateJP(h.signed_date) : todayJP(),
     current_treatment_status:     h.current_treatment_status ?? '',
-    current_treatment_detail:     opt(h.current_treatment_detail),
+    current_treatment_detail:     detail(h.current_treatment_status, h.current_treatment_detail),
     past_illness_status:          h.past_illness_status ?? '',
-    past_illness_detail:          opt(h.past_illness_detail),
+    past_illness_detail:          detail(h.past_illness_status, h.past_illness_detail),
     medication_status:            h.medication_status ?? '',
-    medication_detail:            opt(h.medication_detail),
+    medication_detail:            detail(h.medication_status, h.medication_detail),
     doctor_restriction_status:    h.doctor_restriction_status ?? '',
-    doctor_restriction_detail:    opt(h.doctor_restriction_detail),
+    doctor_restriction_detail:    detail(h.doctor_restriction_status, h.doctor_restriction_detail),
     exercise_experience_status:   h.exercise_experience_status ?? '',
-    exercise_experience_detail:   opt(h.exercise_experience_detail),
+    exercise_experience_detail:   h.exercise_experience_detail?.trim() || '特になし',
     injury_history_status:        h.injury_history_status ?? '',
-    injury_history_detail:        opt(h.injury_history_detail),
-    other_health_notes:           opt(h.other_health_notes),
+    injury_history_detail:        detail(h.injury_history_status, h.injury_history_detail),
+    other_health_notes:           h.other_health_notes?.trim() || '特になし',
     emergency_contact_name:       h.emergency_contact_name?.trim() ?? '',
     emergency_contact_relationship: h.emergency_contact_relationship?.trim() ?? '',
     emergency_contact_phone:      h.emergency_contact_phone?.trim() ?? '',
