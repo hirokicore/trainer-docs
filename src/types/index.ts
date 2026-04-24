@@ -22,8 +22,10 @@ export type DocumentType =
   | 'liability_waiver'
   | 'membership_form'
   | 'cancellation_policy'
+  | 'termination_coolingoff_policy'
   | 'mid_cancel_agreement'
-  | 'effect_disclaimer';
+  | 'effect_disclaimer'
+  | 'effect_non_guarantee_policy';
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   training_contract: 'トレーニング委託契約書',
@@ -32,8 +34,10 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   liability_waiver: '免責同意書',
   membership_form: '入会申込書',
   cancellation_policy: 'キャンセル・返金ポリシー同意書',
+  termination_coolingoff_policy: '途中解約・クーリングオフ同意書',
   mid_cancel_agreement: '途中解約・クーリングオフ同意書',
   effect_disclaimer: '効果保証なし同意書',
+  effect_non_guarantee_policy: '効果保証なし・個人差に関する同意書',
 };
 
 /**
@@ -48,8 +52,10 @@ export const PDF_DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   liability_waiver: '免責同意書',
   membership_form: '入会申込書',
   cancellation_policy: 'キャンセル・返金ポリシー同意書',
+  termination_coolingoff_policy: '途中解約・クーリングオフ同意書',
   mid_cancel_agreement: '途中解約・クーリングオフ同意書',
   effect_disclaimer: '効果保証なし同意書',
+  effect_non_guarantee_policy: '効果保証なし・個人差に関する同意書',
 };
 
 /** Proプラン専用の書類タイプ。Freeユーザーには選択肢を非表示・APIでも弾く。 */
@@ -140,6 +146,38 @@ export interface CancellationPolicyFormData {
 }
 
 // ──────────────────────────────────────────────
+// 途中解約・クーリングオフ同意書（フォーム固有データ）
+// ──────────────────────────────────────────────
+
+/** 途中解約・クーリングオフ同意書の書類固有フォームフィールド */
+export interface TerminationCoolingOffFormData {
+  /** 氏名（フルネーム） */
+  client_name: string;
+  /** 契約日（YYYY-MM-DD） */
+  contract_date: string;
+  /** 同意日（YYYY-MM-DD） */
+  signed_date: string;
+  /** クーリングオフの適用可能性 */
+  cooling_off_applicability_status: string;
+  /** クーリングオフ期間・条件の説明（任意） */
+  cooling_off_period_detail?: string;
+  /** 中途解約に関する基本方針 */
+  midterm_cancellation_status: string;
+  /** 返金・精算方法の説明（任意） */
+  refund_calculation_detail?: string;
+  /** 違約金・事務手数料等の説明（任意） */
+  penalty_detail?: string;
+  /** 解約手続きの方法（任意） */
+  cancellation_procedure_detail?: string;
+  /** 特記事項（任意） */
+  special_notes?: string;
+  /** 説明内容の確認 */
+  policy_read_status: string[];
+  /** 最終同意 */
+  consent_confirmed: string[];
+}
+
+// ──────────────────────────────────────────────
 // 入会申込書（フォーム固有データ）
 // ──────────────────────────────────────────────
 
@@ -205,6 +243,38 @@ export interface MembershipFormData {
   signed_date?: string;
 }
 
+// ──────────────────────────────────────────────
+// 効果保証なし・個人差に関する同意書（フォーム固有データ）
+// ──────────────────────────────────────────────
+
+/** 効果保証なし・個人差に関する同意書の書類固有フォームフィールド */
+export interface EffectNonGuaranteeFormData {
+  /** クライアント氏名 */
+  client_name: string;
+  /** 同意日（YYYY-MM-DD） */
+  signed_date: string;
+  /** 期待する目標・効果（複数選択、任意） */
+  expected_goal_items?: string[];
+  /** 具体的な目標の補足（任意） */
+  expected_goal_detail?: string;
+  /** 効果保証なしの確認 */
+  effect_non_guarantee_status: string;
+  /** 個人差に関する確認 */
+  individual_difference_status: string;
+  /** 結果に影響する要因の説明（任意） */
+  result_influencing_factors_detail?: string;
+  /** クライアントの自己努力に関する説明（任意） */
+  client_effort_requirement_detail?: string;
+  /** 不満足な結果に対する返金なしの確認 */
+  no_refund_for_unsatisfied_result_status: string;
+  /** 特記事項（任意） */
+  special_notes?: string;
+  /** ポリシー確認チェック */
+  policy_read_status: string[];
+  /** 最終同意チェック */
+  consent_confirmed: string[];
+}
+
 export interface TrainerFormData {
   // トレーナー情報
   trainerName: string;
@@ -242,6 +312,10 @@ export interface TrainerFormData {
   membershipFormData?: MembershipFormData;
   /** キャンセル・返金ポリシー同意書固有フォームデータ */
   cancellationPolicyData?: CancellationPolicyFormData;
+  /** 途中解約・クーリングオフ同意書固有フォームデータ */
+  terminationCoolingOffData?: TerminationCoolingOffFormData;
+  /** 効果保証なし・個人差に関する同意書固有フォームデータ */
+  effectNonGuaranteeData?: EffectNonGuaranteeFormData;
 }
 
 export interface Document {

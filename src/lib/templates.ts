@@ -38,7 +38,14 @@
  *   {{notes}}             = {{specialNotes}}
  */
 
-import type { TrainerFormData, LiabilityWaiverFormData, MembershipFormData, CancellationPolicyFormData } from '@/types';
+import type {
+  TrainerFormData,
+  LiabilityWaiverFormData,
+  MembershipFormData,
+  CancellationPolicyFormData,
+  TerminationCoolingOffFormData,
+  EffectNonGuaranteeFormData,
+} from '@/types';
 
 // ──────────────────────────────────────────────
 // 内部ユーティリティ
@@ -817,6 +824,84 @@ const CANCELLATION_POLICY_TEMPLATE = `
 日付：{{signed_date}}
 `.trim();
 
+// ──────────────────────────────────────────────
+// 途中解約・クーリングオフ同意書
+// ──────────────────────────────────────────────
+
+export const TERMINATION_COOLINGOFF_TEMPLATE = `
+途中解約・クーリングオフ同意書
+
+書類番号：{{document_number}}
+事業者名：{{business_name}}
+サービス名：{{service_name}}
+
+---
+
+はじめに
+
+本書は、{{service_name}}のご契約後における途中解約およびクーリングオフに関する考え方、手続き、返金・精算方法について事前にご説明し、お客様と{{business_name}}の相互理解を図るための書類です。
+
+クーリングオフや中途解約の適用可否・条件は、契約の形態・契約場所・契約内容、および特定商取引法等の関係法令の適用状況によって異なります。ご不明な点があれば、署名前に担当トレーナーまたは{{business_name}}までお問い合わせください。
+
+---
+
+■ クーリングオフについて
+
+本契約のクーリングオフ適用可能性：{{cooling_off_applicability_status}}
+
+{{cooling_off_period_detail}}
+
+本契約が特定継続的役務提供に該当する場合、契約書面を受領した日を含め8日以内に、書面または法令上認められる方法で{{business_name}}へ通知することにより、クーリングオフを行使できる場合があります。クーリングオフが成立した場合、受領済みの金額は速やかに返還されます。
+
+ただし、店舗で申し込まれた契約や、法令上の適用要件を満たさない契約形態の場合は、クーリングオフの対象外となることがあります。適用可否については、契約時に{{business_name}}よりご説明いたします。
+
+---
+
+■ 中途解約について
+
+中途解約に関する基本方針：{{midterm_cancellation_status}}
+
+【返金・精算方法】
+{{refund_calculation_detail}}
+
+中途解約が認められる場合、提供済みサービス相当額および所定の損害金・事務手数料等を差し引いた残額を返金いたします。精算方法の詳細は、ご契約内容に従うものとします。
+
+【違約金・事務手数料等】
+{{penalty_detail}}
+
+違約金や事務手数料が発生する場合は、その上限・計算方法・発生条件について、契約時またはご解約申し出時に個別にご説明いたします。
+
+---
+
+■ 解約手続きについて
+
+途中解約をご希望の場合は、まずお早めに{{business_name}}または担当トレーナーまでお申し出ください。
+
+【手続き方法】
+{{cancellation_procedure_detail}}
+
+口頭でのお申し出のみでは解約手続きが完了しない場合があります。書面・メール・所定フォーム等、{{business_name}}が指定する方法でご連絡ください。解約が受理された日付を基準に精算を行います。
+
+---
+
+■ 特記事項
+
+{{special_notes}}
+
+---
+
+■ 同意
+
+私は、本書の内容を読み、途中解約およびクーリングオフに関する説明を十分に理解したうえで、以下に同意します。
+
+・途中解約・クーリングオフに関する説明を読み、理解しました。
+・上記内容を確認のうえ、同意します。
+
+クライアント氏名（自署）：{{client_name}}
+契約日：{{contract_date}}
+同意日：{{signed_date}}
+`.trim();
+
 /**
  * キャンセル・返金ポリシー同意書テンプレートを適用してドキュメント文字列を生成する。
  *
@@ -854,6 +939,121 @@ export function applyCancellationPolicyTemplate(formData: TrainerFormData): stri
   };
 
   return CANCELLATION_POLICY_TEMPLATE.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key: string) => vars[key] ?? `{{${key}}}`
+  );
+}
+
+export function applyTerminationCoolingOffTemplate(formData: TrainerFormData): string {
+  const t: Partial<TerminationCoolingOffFormData> = formData.terminationCoolingOffData ?? {};
+
+  const vars: Record<string, string> = {
+    document_number: generateContractNumber(),
+    business_name: formData.businessName,
+    service_name: formData.businessName,
+    client_name: t.client_name?.trim() || formData.clientName,
+    contract_date: t.contract_date ? formatDateJP(t.contract_date) : '',
+    signed_date: t.signed_date ? formatDateJP(t.signed_date) : '',
+    cooling_off_applicability_status: t.cooling_off_applicability_status ?? '',
+    cooling_off_period_detail: t.cooling_off_period_detail?.trim() || '',
+    midterm_cancellation_status: t.midterm_cancellation_status ?? '',
+    refund_calculation_detail: t.refund_calculation_detail?.trim() || '',
+    penalty_detail: t.penalty_detail?.trim() || '',
+    cancellation_procedure_detail: t.cancellation_procedure_detail?.trim() || '',
+    special_notes: t.special_notes?.trim() || '',
+  };
+
+  return TERMINATION_COOLINGOFF_TEMPLATE.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key: string) => vars[key] ?? `{{${key}}}`
+  );
+}
+
+// ──────────────────────────────────────────────
+// 効果保証なし・個人差に関する同意書
+// ──────────────────────────────────────────────
+
+export const EFFECT_NON_GUARANTEE_TEMPLATE = `
+効果保証なし・個人差に関する同意書
+書類番号：{{document_number}}
+
+【サービス提供者】
+事業者名：{{business_name}}
+
+【クライアント】
+氏名：{{client_name}}
+
+■ 期待する目標・効果
+{{expected_goal_items}}
+{{expected_goal_detail}}
+
+■ 効果の保証について
+{{effect_non_guarantee_status}}
+
+トレーニング指導（以下「本サービス」）は、体重・体脂肪・筋肉量・体力・姿勢等に関する特定の効果または結果を保証するものではありません。本サービスはパーソナルトレーニング指導の提供を目的とするものであり、医療行為ではなく、疾患の治療・改善を目的としたものでもありません。
+
+■ 個人差について
+{{individual_difference_status}}
+
+トレーニングの効果は、年齢・性別・体質・遺伝的要因・ホルモンバランス等により個人差があり、同一のプログラムを実施した場合でも、得られる結果は異なります。
+
+結果に影響する主な要因：
+{{result_influencing_factors_detail}}
+
+■ クライアントの自己努力について
+{{client_effort_requirement_detail}}
+
+■ 返金・補償について
+{{no_refund_for_unsatisfied_result_status}}
+
+サービス提供者は、本サービスにおいて合理的かつ専門的な指導を提供する義務を負いますが、期待する成果が得られなかった場合における返金・損害賠償その他一切の補償義務を負いません。
+
+■ 特記事項
+{{special_notes}}
+
+■ 同意
+私は、上記の内容を十分に理解し、効果の保証がないこと・個人差があることを認識したうえで、自己の判断と責任においてサービスを利用することに同意します。
+
+同意日：{{signed_date}}
+
+クライアント署名：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿　　　印
+
+サービス提供者署名：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿　　　印
+`.trim();
+
+/**
+ * 効果保証なし・個人差に関する同意書テンプレートを適用してドキュメント文字列を生成する。
+ *
+ * - expected_goal_items（checkbox）は箇条書き（「・」＋改行）で展開
+ * - 任意テキスト項目が空の場合は空文字を設定
+ * - 共通変数（businessName）は TrainerFormData から取得
+ * - 書類固有変数は formData.effectNonGuaranteeData から取得
+ */
+export function applyEffectNonGuaranteeTemplate(formData: TrainerFormData): string {
+  const e: Partial<EffectNonGuaranteeFormData> = formData.effectNonGuaranteeData ?? {};
+
+  const toBullets = (arr: string[] | undefined): string =>
+    Array.isArray(arr) && arr.length > 0
+      ? arr.map((item) => `・${item}`).join('\n')
+      : '（特に定めなし）';
+
+  const vars: Record<string, string> = {
+    document_number:                        generateContractNumber(),
+    business_name:                          formData.businessName,
+    service_name:                           formData.businessName,
+    client_name:                            e.client_name?.trim() || formData.clientName,
+    signed_date:                            e.signed_date ? formatDateJP(e.signed_date) : todayJP(),
+    expected_goal_items:                    toBullets(e.expected_goal_items),
+    expected_goal_detail:                   e.expected_goal_detail?.trim() || '',
+    effect_non_guarantee_status:            e.effect_non_guarantee_status?.trim() ?? '',
+    individual_difference_status:           e.individual_difference_status?.trim() ?? '',
+    result_influencing_factors_detail:      e.result_influencing_factors_detail?.trim() || '食事・睡眠・ストレス・日常活動量・生活習慣等',
+    client_effort_requirement_detail:       e.client_effort_requirement_detail?.trim() || '目標達成には、セッション外での自主的な取り組みや日常生活における継続的な努力が重要な要素となります。',
+    no_refund_for_unsatisfied_result_status: e.no_refund_for_unsatisfied_result_status?.trim() ?? '',
+    special_notes:                          e.special_notes?.trim() || 'なし',
+  };
+
+  return EFFECT_NON_GUARANTEE_TEMPLATE.replace(
     /\{\{(\w+)\}\}/g,
     (_, key: string) => vars[key] ?? `{{${key}}}`
   );

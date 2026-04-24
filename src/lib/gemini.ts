@@ -1,6 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TrainerFormData, DOCUMENT_TYPE_LABELS, DocumentType } from '@/types';
-import { applyTemplate, applyLiabilityWaiverTemplate, applyMembershipFormTemplate, applyCancellationPolicyTemplate, TRAINING_CONTRACT_TEMPLATE_MAP } from '@/lib/templates';
+import {
+  applyTemplate,
+  applyLiabilityWaiverTemplate,
+  applyMembershipFormTemplate,
+  applyCancellationPolicyTemplate,
+  applyTerminationCoolingOffTemplate,
+  applyEffectNonGuaranteeTemplate,
+  TRAINING_CONTRACT_TEMPLATE_MAP,
+} from '@/lib/templates';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -119,6 +127,8 @@ export function getGenerationEngine(documentType: DocumentType): 'gemini' | 'tem
   if (documentType === 'liability_waiver') return 'template_only';
   if (documentType === 'membership_form') return 'template_only';
   if (documentType === 'cancellation_policy') return 'template_only';
+  if (documentType === 'termination_coolingoff_policy') return 'template_only';
+  if (documentType === 'effect_non_guarantee_policy') return 'template_only';
   return STATIC_TEMPLATE_MAP[documentType] ? 'template_only' : 'gemini';
 }
 
@@ -136,6 +146,16 @@ export async function generateDocument(formData: TrainerFormData): Promise<strin
   // キャンセル・返金ポリシー同意書: 固有フォームデータを使う専用テンプレートエンジン
   if (formData.documentType === 'cancellation_policy') {
     return applyCancellationPolicyTemplate(formData);
+  }
+
+  // 途中解約・クーリングオフ同意書: 固有フォームデータを使う専用テンプレートエンジン
+  if (formData.documentType === 'termination_coolingoff_policy') {
+    return applyTerminationCoolingOffTemplate(formData);
+  }
+
+  // 効果保証なし・個人差に関する同意書: 固有フォームデータを使う専用テンプレートエンジン
+  if (formData.documentType === 'effect_non_guarantee_policy') {
+    return applyEffectNonGuaranteeTemplate(formData);
   }
 
   // 委託契約書（標準版・Pro版）など静的テンプレートが登録されている場合
