@@ -45,6 +45,7 @@ import type {
   CancellationPolicyFormData,
   TerminationCoolingOffFormData,
   EffectNonGuaranteeFormData,
+  HealthCheckFormData,
 } from '@/types';
 
 // ──────────────────────────────────────────────
@@ -1054,6 +1055,132 @@ export function applyEffectNonGuaranteeTemplate(formData: TrainerFormData): stri
   };
 
   return EFFECT_NON_GUARANTEE_TEMPLATE.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key: string) => vars[key] ?? `{{${key}}}`
+  );
+}
+
+// ──────────────────────────────────────────────
+// 健康状態確認書
+// ──────────────────────────────────────────────
+
+export const HEALTH_CHECK_TEMPLATE = `
+健康状態確認書
+
+書類番号：{{document_number}}
+事業者名：{{business_name}}
+サービス名：{{service_name}}
+クライアント氏名：{{client_name}}
+記入日：{{signed_date}}
+
+---
+
+はじめに
+
+本書は、{{service_name}}におけるパーソナルトレーニングを安全に実施するために、お客様ご自身の現在および過去の健康状態について事前に確認させていただくための書類です。
+
+本書は医師の診断書ではなく、お客様の自己申告に基づくものです。記載いただいた情報は、トレーニングプログラムの設計および安全な指導のためにのみ使用し、適切に管理いたします。お答えにくい項目は差し支えない範囲で構いません。ご不明な点があれば、担当トレーナーまでお気軽にお申し出ください。
+
+---
+
+■ 健康状態に関する申告
+
+【現在の治療・通院状況】
+現在、治療中または通院中のご病気：{{current_treatment_status}}
+{{current_treatment_detail}}
+
+【過去の大きな病気・手術歴】
+過去に大きなご病気や手術のご経験：{{past_illness_status}}
+{{past_illness_detail}}
+
+---
+
+■ 服薬・医師からの指示
+
+【服薬状況】
+現在、常時または定期的に服用しているお薬：{{medication_status}}
+{{medication_detail}}
+
+【医師からの運動制限・注意事項】
+医師から運動・身体活動について制限や注意指示：{{doctor_restriction_status}}
+{{doctor_restriction_detail}}
+
+運動制限等がある場合は、必要に応じて担当医の許可を得てからご参加いただくようお願いする場合があります。
+
+---
+
+■ 運動経験・ケガの歴
+
+【運動習慣】
+{{exercise_experience_status}}
+{{exercise_experience_detail}}
+
+【ケガ・痛みの有無】
+運動に影響するケガや痛み：{{injury_history_status}}
+{{injury_history_detail}}
+
+---
+
+■ その他の健康上の注意点
+
+{{other_health_notes}}
+
+---
+
+■ 緊急連絡先
+
+氏名：{{emergency_contact_name}}
+続柄：{{emergency_contact_relationship}}
+電話番号：{{emergency_contact_phone}}
+
+---
+
+■ 確認・同意
+
+私は、上記の健康状態に関する申告内容が、現在把握している範囲で正確かつ誠実であることを確認しました。また、本健康状態確認書の内容を理解し、自己の判断と責任においてパーソナルトレーニングに参加することに同意します。
+
+クライアント氏名（自署）：{{client_name}}
+記入日：{{signed_date}}
+`.trim();
+
+/**
+ * 健康状態確認書テンプレートを適用してドキュメント文字列を生成する。
+ *
+ * - はい/いいえ系 radio の詳細（*_detail）は空の場合「特になし」に置換
+ * - other_health_notes が空の場合「特になし」に置換
+ * - 共通変数（businessName）は TrainerFormData から取得
+ * - 書類固有変数は formData.healthCheckData から取得
+ */
+export function applyHealthCheckTemplate(formData: TrainerFormData): string {
+  const h: Partial<HealthCheckFormData> = formData.healthCheckData ?? {};
+
+  const opt = (val: string | undefined) => val?.trim() || '特になし';
+
+  const vars: Record<string, string> = {
+    document_number:              generateContractNumber(),
+    business_name:                formData.businessName,
+    service_name:                 formData.businessName,
+    client_name:                  h.client_name?.trim() || formData.clientName,
+    signed_date:                  h.signed_date ? formatDateJP(h.signed_date) : todayJP(),
+    current_treatment_status:     h.current_treatment_status ?? '',
+    current_treatment_detail:     opt(h.current_treatment_detail),
+    past_illness_status:          h.past_illness_status ?? '',
+    past_illness_detail:          opt(h.past_illness_detail),
+    medication_status:            h.medication_status ?? '',
+    medication_detail:            opt(h.medication_detail),
+    doctor_restriction_status:    h.doctor_restriction_status ?? '',
+    doctor_restriction_detail:    opt(h.doctor_restriction_detail),
+    exercise_experience_status:   h.exercise_experience_status ?? '',
+    exercise_experience_detail:   opt(h.exercise_experience_detail),
+    injury_history_status:        h.injury_history_status ?? '',
+    injury_history_detail:        opt(h.injury_history_detail),
+    other_health_notes:           opt(h.other_health_notes),
+    emergency_contact_name:       h.emergency_contact_name?.trim() ?? '',
+    emergency_contact_relationship: h.emergency_contact_relationship?.trim() ?? '',
+    emergency_contact_phone:      h.emergency_contact_phone?.trim() ?? '',
+  };
+
+  return HEALTH_CHECK_TEMPLATE.replace(
     /\{\{(\w+)\}\}/g,
     (_, key: string) => vars[key] ?? `{{${key}}}`
   );

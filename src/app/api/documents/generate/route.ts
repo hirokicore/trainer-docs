@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
   // ── バリデーション ──
   // 入会申込書・キャンセルポリシー同意書はクライアント名を書類固有データから取得するため commonRequired から除外
-  const skipClientName = ['membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy'].includes(formData.documentType);
+  const skipClientName = ['membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy', 'health_check'].includes(formData.documentType);
   const commonRequired: (keyof TrainerFormData)[] = [
     'trainerName', 'businessName', 'address', 'phone', 'email',
     'documentType',
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   ];
   // 免責同意書・入会申込書・キャンセルポリシー同意書は契約固有フィールドを使わないためスキップ
   const contractRequired: (keyof TrainerFormData)[] =
-    ['liability_waiver', 'membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy'].includes(formData.documentType)
+    ['liability_waiver', 'membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy', 'health_check'].includes(formData.documentType)
       ? []
       : ['contractStartDate', 'contractEndDate', 'sessionFee', 'sessionCount'];
 
@@ -135,6 +135,8 @@ export async function POST(request: NextRequest) {
         ? (processedFormData.terminationCoolingOffData?.client_name ?? processedFormData.clientName)
         : processedFormData.documentType === 'effect_non_guarantee_policy'
         ? (processedFormData.effectNonGuaranteeData?.client_name ?? processedFormData.clientName)
+        : processedFormData.documentType === 'health_check'
+        ? (processedFormData.healthCheckData?.client_name ?? processedFormData.clientName)
         : processedFormData.clientName;
     const title =
       processedFormData.documentType === 'termination_coolingoff_policy'

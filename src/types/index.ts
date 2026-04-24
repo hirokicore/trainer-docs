@@ -244,6 +244,54 @@ export interface MembershipFormData {
 }
 
 // ──────────────────────────────────────────────
+// 健康状態確認書（フォーム固有データ）
+// ──────────────────────────────────────────────
+
+/** 健康状態確認書の書類固有フォームフィールド */
+export interface HealthCheckFormData {
+  /** クライアント氏名 */
+  client_name: string;
+  /** 記入日（YYYY-MM-DD） */
+  signed_date: string;
+  /** 現在の治療・通院状況 */
+  current_treatment_status: string;
+  /** 治療中・通院中の内容（任意） */
+  current_treatment_detail?: string;
+  /** 既往歴・手術歴の有無 */
+  past_illness_status: string;
+  /** 既往歴・手術歴の詳細（任意） */
+  past_illness_detail?: string;
+  /** 服薬状況 */
+  medication_status: string;
+  /** 服薬中の薬の詳細（任意） */
+  medication_detail?: string;
+  /** 医師からの運動制限の有無 */
+  doctor_restriction_status: string;
+  /** 医師からの運動制限・注意事項（任意） */
+  doctor_restriction_detail?: string;
+  /** 運動習慣（select） */
+  exercise_experience_status: string;
+  /** 運動経験の詳細（任意） */
+  exercise_experience_detail?: string;
+  /** ケガ・痛みの有無 */
+  injury_history_status: string;
+  /** ケガ・痛みの部位・状況（任意） */
+  injury_history_detail?: string;
+  /** その他の健康上の注意点（任意） */
+  other_health_notes?: string;
+  /** 緊急連絡先：氏名 */
+  emergency_contact_name: string;
+  /** 緊急連絡先：続柄 */
+  emergency_contact_relationship: string;
+  /** 緊急連絡先：電話番号 */
+  emergency_contact_phone: string;
+  /** 申告内容の確認チェック */
+  health_declaration_confirmed: string[];
+  /** 最終同意チェック */
+  consent_confirmed: string[];
+}
+
+// ──────────────────────────────────────────────
 // 効果保証なし・個人差に関する同意書（フォーム固有データ）
 // ──────────────────────────────────────────────
 
@@ -316,6 +364,8 @@ export interface TrainerFormData {
   terminationCoolingOffData?: TerminationCoolingOffFormData;
   /** 効果保証なし・個人差に関する同意書固有フォームデータ */
   effectNonGuaranteeData?: EffectNonGuaranteeFormData;
+  /** 健康状態確認書固有フォームデータ */
+  healthCheckData?: HealthCheckFormData;
 }
 
 export interface Document {

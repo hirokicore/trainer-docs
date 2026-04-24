@@ -7,6 +7,7 @@ import {
   applyCancellationPolicyTemplate,
   applyTerminationCoolingOffTemplate,
   applyEffectNonGuaranteeTemplate,
+  applyHealthCheckTemplate,
   TRAINING_CONTRACT_TEMPLATE_MAP,
 } from '@/lib/templates';
 
@@ -25,12 +26,6 @@ const DOCUMENT_SPECIFIC_INSTRUCTIONS: Partial<Record<DocumentType, string>> = {
 - 料金・支払条件・遅延損害金について記載すること
 - 契約解除条件（双方の事由）を明記すること
 - 秘密保持義務を含めること`,
-
-  health_check: `
-- 既往症・現在の疾患・服薬状況の確認欄を設けること
-- 運動制限の有無・医師の指示事項の記入欄を設けること
-- 虚偽申告に関する免責条項を含めること
-- 定期的な健康状態の更新について記載すること`,
 
   liability_waiver: `
 - トレーニング中の怪我・事故に対するリスク説明を明記すること
@@ -129,6 +124,7 @@ export function getGenerationEngine(documentType: DocumentType): 'gemini' | 'tem
   if (documentType === 'cancellation_policy') return 'template_only';
   if (documentType === 'termination_coolingoff_policy') return 'template_only';
   if (documentType === 'effect_non_guarantee_policy') return 'template_only';
+  if (documentType === 'health_check') return 'template_only';
   return STATIC_TEMPLATE_MAP[documentType] ? 'template_only' : 'gemini';
 }
 
@@ -156,6 +152,11 @@ export async function generateDocument(formData: TrainerFormData): Promise<strin
   // 効果保証なし・個人差に関する同意書: 固有フォームデータを使う専用テンプレートエンジン
   if (formData.documentType === 'effect_non_guarantee_policy') {
     return applyEffectNonGuaranteeTemplate(formData);
+  }
+
+  // 健康状態確認書: 固有フォームデータを使う専用テンプレートエンジン
+  if (formData.documentType === 'health_check') {
+    return applyHealthCheckTemplate(formData);
   }
 
   // 委託契約書（標準版・Pro版）など静的テンプレートが登録されている場合
