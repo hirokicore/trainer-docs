@@ -46,7 +46,6 @@ const plans = [
     features: [
       `書類生成累計${FREE_TOTAL_LIMIT}件まで`,
       '標準テンプレ（サンプル版）',
-      'PDFダウンロード（透かし入り）',
       'ご意見・ご要望フォームのみ',
     ],
     restriction: '商用利用・実務利用はできません',
