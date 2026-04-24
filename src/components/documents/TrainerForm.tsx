@@ -14,6 +14,8 @@ import {
   type LiabilityWaiverFormData,
   type MembershipFormData,
   type CancellationPolicyFormData,
+  type TerminationCoolingOffFormData,
+  type EffectNonGuaranteeFormData,
 } from '@/types';
 import { User, Briefcase, FileText, StickyNote, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -54,6 +56,20 @@ const CANCELLATION_POLICY_STEPS = [
   { id: 4, label: 'ポリシー同意', icon: StickyNote },
 ];
 
+const TERMINATION_COOLINGOFF_STEPS = [
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'クライアント情報', icon: User },
+  { id: 4, label: '同意事項の確認', icon: StickyNote },
+];
+
+const EFFECT_NON_GUARANTEE_STEPS = [
+  { id: 1, label: '書類選択', icon: FileText },
+  { id: 2, label: 'トレーナー情報', icon: User },
+  { id: 3, label: 'クライアント情報', icon: User },
+  { id: 4, label: '同意事項の確認', icon: StickyNote },
+];
+
 const defaultCancellationPolicyValues: Partial<CancellationPolicyFormData> = {
   client_name: '',
   signed_date: '',
@@ -65,6 +81,36 @@ const defaultCancellationPolicyValues: Partial<CancellationPolicyFormData> = {
   exception_cases_items: [],
   exception_cases_detail: '',
   policy_scope_items: [],
+  consent_confirmed: [],
+};
+
+const defaultEffectNonGuaranteeValues: Partial<EffectNonGuaranteeFormData> = {
+  client_name: '',
+  signed_date: '',
+  expected_goal_items: [],
+  expected_goal_detail: '',
+  effect_non_guarantee_status: '',
+  individual_difference_status: '',
+  result_influencing_factors_detail: '',
+  client_effort_requirement_detail: '',
+  no_refund_for_unsatisfied_result_status: '',
+  special_notes: '',
+  policy_read_status: [],
+  consent_confirmed: [],
+};
+
+const defaultTerminationCoolingOffValues: Partial<TerminationCoolingOffFormData> = {
+  client_name: '',
+  contract_date: '',
+  signed_date: '',
+  cooling_off_applicability_status: '',
+  cooling_off_period_detail: '',
+  midterm_cancellation_status: '',
+  refund_calculation_detail: '',
+  penalty_detail: '',
+  cancellation_procedure_detail: '',
+  special_notes: '',
+  policy_read_status: [],
   consent_confirmed: [],
 };
 
@@ -371,6 +417,10 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const [liabilityWaiverData, setLiabilityWaiverData] = useState<Partial<LiabilityWaiverFormData>>(defaultWaiverValues);
   const [membershipFormData, setMembershipFormData] = useState<Partial<MembershipFormData>>(defaultMembershipValues);
   const [cancellationPolicyData, setCancellationPolicyData] = useState<Partial<CancellationPolicyFormData>>(defaultCancellationPolicyValues);
+  const [terminationCoolingOffData, setTerminationCoolingOffData] =
+    useState<Partial<TerminationCoolingOffFormData>>(defaultTerminationCoolingOffValues);
+  const [effectNonGuaranteeData, setEffectNonGuaranteeData] =
+    useState<Partial<EffectNonGuaranteeFormData>>(defaultEffectNonGuaranteeValues);
   const [generationStep, setGenerationStep] = useState<GenerationStep>(0);
   const [error, setError] = useState('');
   const [showProHint, setShowProHint] = useState(false);
@@ -383,12 +433,18 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
   const isLiabilityWaiver = form.documentType === 'liability_waiver';
   const isMembershipForm = form.documentType === 'membership_form';
   const isCancellationPolicy = form.documentType === 'cancellation_policy';
+  const isTerminationCoolingOffPolicy = form.documentType === 'termination_coolingoff_policy';
+  const isEffectNonGuaranteePolicy = form.documentType === 'effect_non_guarantee_policy';
   const STEPS = isLiabilityWaiver
     ? LIABILITY_WAIVER_STEPS
     : isMembershipForm
     ? MEMBERSHIP_FORM_STEPS
     : isCancellationPolicy
     ? CANCELLATION_POLICY_STEPS
+    : isTerminationCoolingOffPolicy
+    ? TERMINATION_COOLINGOFF_STEPS
+    : isEffectNonGuaranteePolicy
+    ? EFFECT_NON_GUARANTEE_STEPS
     : DEFAULT_STEPS;
   const totalSteps = STEPS.length;
 
@@ -405,7 +461,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
 
   const handleDocumentTypeChange = (docType: string) => {
     update('documentType', docType);
-    const maxStep = ['liability_waiver', 'membership_form', 'cancellation_policy'].includes(docType) ? 4 : 5;
+    const maxStep = ['liability_waiver', 'membership_form', 'cancellation_policy', 'termination_coolingoff_policy', 'effect_non_guarantee_policy'].includes(docType) ? 4 : 5;
     if (step > maxStep) setStep(1);
   };
 
@@ -485,6 +541,78 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
     return null;
   };
 
+  function updateTerminationCoolingOff<K extends keyof TerminationCoolingOffFormData>(
+    key: K,
+    value: TerminationCoolingOffFormData[K]
+  ) {
+    setTerminationCoolingOffData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
+  function toggleTerminationCoolingOffCheckbox(
+    key: keyof Pick<
+      TerminationCoolingOffFormData,
+      'policy_read_status' | 'consent_confirmed'
+    >,
+    option: string
+  ) {
+    setTerminationCoolingOffData((prev) => {
+      const current = (prev[key] as string[]) ?? [];
+      const exists = current.includes(option);
+
+      return {
+        ...prev,
+        [key]: exists
+          ? current.filter((item) => item !== option)
+          : [...current, option],
+      };
+    });
+  }
+
+  function updateEffectNonGuarantee<K extends keyof EffectNonGuaranteeFormData>(
+    key: K,
+    value: EffectNonGuaranteeFormData[K]
+  ) {
+    setEffectNonGuaranteeData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleEffectNonGuaranteeCheckbox(
+    key: keyof Pick<EffectNonGuaranteeFormData, 'expected_goal_items' | 'policy_read_status' | 'consent_confirmed'>,
+    option: string
+  ) {
+    setEffectNonGuaranteeData((prev) => {
+      const current = (prev[key] as string[]) ?? [];
+      const exists = current.includes(option);
+      return { ...prev, [key]: exists ? current.filter((item) => item !== option) : [...current, option] };
+    });
+  }
+
+  const validateEffectNonGuaranteeStep = (): string | null => {
+    const e = effectNonGuaranteeData;
+    if (!e.client_name?.trim()) return '氏名を入力してください';
+    if (!e.signed_date) return '同意日を入力してください';
+    if (!e.effect_non_guarantee_status) return '効果の非保証に関する確認を選択してください';
+    if (!e.individual_difference_status) return '個人差に関する確認を選択してください';
+    if (!e.no_refund_for_unsatisfied_result_status) return '結果不満足時の返金等に関する確認を選択してください';
+    if (!e.policy_read_status?.length) return '説明内容の確認チェックが必要です';
+    if (!e.consent_confirmed?.length) return '最終同意のチェックが必要です';
+    return null;
+  };
+
+  const validateTerminationCoolingOffStep = (): string | null => {
+    const t = terminationCoolingOffData;
+    if (!t.client_name?.trim()) return '氏名を入力してください';
+    if (!t.contract_date) return '契約日を入力してください';
+    if (!t.signed_date) return '同意日を入力してください';
+    if (!t.cooling_off_applicability_status) return 'クーリングオフの適用可能性を選択してください';
+    if (!t.midterm_cancellation_status) return '中途解約に関する基本方針を選択してください';
+    if (!t.policy_read_status?.length) return '説明内容の確認チェックが必要です';
+    if (!t.consent_confirmed?.length) return '最終同意のチェックが必要です';
+    return null;
+  };
+
   const toggleWaiverCheckbox = (field: 'service_items' | 'consent_confirmed', option: string) => {
     setLiabilityWaiverData((prev) => {
       const current = (prev[field] as string[]) ?? [];
@@ -524,6 +652,14 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
       const validationError = validateCancellationPolicyStep();
       if (validationError) { setError(validationError); return; }
     }
+    if (isTerminationCoolingOffPolicy) {
+      const validationError = validateTerminationCoolingOffStep();
+      if (validationError) { setError(validationError); return; }
+    }
+    if (isEffectNonGuaranteePolicy) {
+      const validationError = validateEffectNonGuaranteeStep();
+      if (validationError) { setError(validationError); return; }
+    }
 
     setGenerationStep(1);
     step2TimerRef.current = setTimeout(() => setGenerationStep(2), 10_000);
@@ -535,6 +671,14 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
         liabilityWaiverData: isLiabilityWaiver ? (liabilityWaiverData as LiabilityWaiverFormData) : undefined,
         membershipFormData: isMembershipForm ? (membershipFormData as MembershipFormData) : undefined,
         cancellationPolicyData: isCancellationPolicy ? (cancellationPolicyData as CancellationPolicyFormData) : undefined,
+        terminationCoolingOffData:
+          isTerminationCoolingOffPolicy
+            ? (terminationCoolingOffData as TerminationCoolingOffFormData)
+            : undefined,
+        effectNonGuaranteeData:
+          isEffectNonGuaranteePolicy
+            ? (effectNonGuaranteeData as EffectNonGuaranteeFormData)
+            : undefined,
       };
 
       const res = await fetch('/api/documents/generate', {
@@ -1124,6 +1268,361 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
+          {/* Step 4: 途中解約・クーリングオフ同意書専用フォーム */}
+          {step === 4 && isTerminationCoolingOffPolicy && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                各項目を確認し、必須項目（<span className="text-red-500">*</span>）をすべて入力・選択してください。
+              </p>
+
+              <div className="space-y-4">
+                <Input
+                  label="氏名（フルネーム）"
+                  value={terminationCoolingOffData.client_name ?? ''}
+                  onChange={(e) => updateTerminationCoolingOff('client_name', e.target.value)}
+                  placeholder="田中 花子"
+                  required
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="契約日"
+                    type="date"
+                    value={terminationCoolingOffData.contract_date ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('contract_date', e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="同意日"
+                    type="date"
+                    value={terminationCoolingOffData.signed_date ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('signed_date', e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleRadioGroup
+                  label="クーリングオフの適用可能性"
+                  description="契約形態・契約場所・契約内容により異なります。"
+                  options={[
+                    '本契約は、条件を満たす場合にクーリングオフ制度の対象となる可能性があります',
+                    '本契約は、クーリングオフ制度の対象外となる場合があります',
+                  ]}
+                  value={terminationCoolingOffData.cooling_off_applicability_status ?? ''}
+                  onChange={(v) => updateTerminationCoolingOff('cooling_off_applicability_status', v)}
+                  required
+                />
+                <div>
+                  <label className="form-label">
+                    クーリングオフ期間・条件の説明
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={terminationCoolingOffData.cooling_off_period_detail ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('cooling_off_period_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：契約書面受領日を含め8日以内に、書面または法令上認められる方法で通知する必要があります。"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleRadioGroup
+                  label="中途解約に関する基本方針"
+                  options={[
+                    '契約期間中は、条件に従って中途解約が可能です',
+                    '中途解約の可否および精算方法は契約内容に従います',
+                  ]}
+                  value={terminationCoolingOffData.midterm_cancellation_status ?? ''}
+                  onChange={(v) => updateTerminationCoolingOff('midterm_cancellation_status', v)}
+                  required
+                />
+                <div>
+                  <label className="form-label">
+                    返金・精算方法の説明
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={terminationCoolingOffData.refund_calculation_detail ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('refund_calculation_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：提供済みサービス相当額および所定の事務手数料等を差し引いた残額を返金します。"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">
+                    違約金・事務手数料等の説明
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={terminationCoolingOffData.penalty_detail ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('penalty_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="上限・計算方法・発生条件があれば記載してください。"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="form-label">
+                    解約手続きの方法
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={terminationCoolingOffData.cancellation_procedure_detail ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('cancellation_procedure_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：書面、メール、所定フォーム等でお申し出ください。"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">
+                    特記事項
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={terminationCoolingOffData.special_notes ?? ''}
+                    onChange={(e) => updateTerminationCoolingOff('special_notes', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="その他、伝えておきたい事項があればご記入ください。"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="説明内容の確認"
+                  options={['途中解約・クーリングオフに関する説明を読み、理解しました。']}
+                  values={terminationCoolingOffData.policy_read_status ?? []}
+                  onChange={(opt) => toggleTerminationCoolingOffCheckbox('policy_read_status', opt)}
+                  required
+                />
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={(terminationCoolingOffData.consent_confirmed ?? []).length > 0}
+                    onChange={() => toggleTerminationCoolingOffCheckbox('consent_confirmed', '上記内容を確認のうえ、同意します。')}
+                  />
+                  <span
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      (terminationCoolingOffData.consent_confirmed ?? []).length > 0
+                        ? 'border-brand-500 bg-brand-500'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {(terminationCoolingOffData.consent_confirmed ?? []).length > 0 && (
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      上記内容を確認のうえ、同意します。<span className="ml-0.5 text-red-500">*</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">この同意がないと書類を生成できません。</p>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 4: 効果保証なし・個人差に関する同意書専用フォーム */}
+          {step === 4 && isEffectNonGuaranteePolicy && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3 leading-relaxed">
+                各項目を確認し、必須項目（<span className="text-red-500">*</span>）をすべて入力・選択してください。
+              </p>
+
+              <div className="space-y-4">
+                <Input
+                  label="氏名（フルネーム）"
+                  value={effectNonGuaranteeData.client_name ?? ''}
+                  onChange={(e) => updateEffectNonGuarantee('client_name', e.target.value)}
+                  placeholder="田中 花子"
+                  required
+                />
+                <Input
+                  label="同意日"
+                  type="date"
+                  value={effectNonGuaranteeData.signed_date ?? ''}
+                  onChange={(e) => updateEffectNonGuarantee('signed_date', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="主に期待している成果（複数選択可）"
+                  description="クライアントが期待している成果をすべて選択してください。"
+                  options={['体重減少', '体脂肪率の改善', '筋力向上', '姿勢改善', '健康維持・体力向上', '見た目・ボディラインの改善', 'その他']}
+                  values={effectNonGuaranteeData.expected_goal_items ?? []}
+                  onChange={(opt) => toggleEffectNonGuaranteeCheckbox('expected_goal_items', opt)}
+                />
+                <div>
+                  <label className="form-label">
+                    目標の補足
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={effectNonGuaranteeData.expected_goal_detail ?? ''}
+                    onChange={(e) => updateEffectNonGuarantee('expected_goal_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="具体的な目標や希望があればご記入ください。"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleRadioGroup
+                  label="効果の非保証に関する確認"
+                  description="期待される改善可能性と成果保証は異なることを確認する項目です。"
+                  options={[
+                    '本サービスは、特定の成果・数値目標・期間内達成を保証するものではありません',
+                    '本サービスは、個別の状況に応じた支援を行うものであり、成果を約束するものではありません',
+                  ]}
+                  value={effectNonGuaranteeData.effect_non_guarantee_status ?? ''}
+                  onChange={(v) => updateEffectNonGuarantee('effect_non_guarantee_status', v)}
+                  required
+                />
+                <SimpleRadioGroup
+                  label="個人差に関する確認"
+                  description="効果の現れ方には個人差があることを確認する項目です。"
+                  options={[
+                    'トレーニングの効果には個人差があります',
+                    '体質・生活習慣・既往歴等により、同じ指導でも結果は異なります',
+                  ]}
+                  value={effectNonGuaranteeData.individual_difference_status ?? ''}
+                  onChange={(v) => updateEffectNonGuarantee('individual_difference_status', v)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="form-label">
+                    成果に影響する要素の説明
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={effectNonGuaranteeData.result_influencing_factors_detail ?? ''}
+                    onChange={(e) => updateEffectNonGuarantee('result_influencing_factors_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：睡眠、食事、ストレス、既往歴、運動頻度、日常活動量等により結果は左右されます。"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">
+                    クライアント側の取り組みに関する説明
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={effectNonGuaranteeData.client_effort_requirement_detail ?? ''}
+                    onChange={(e) => updateEffectNonGuarantee('client_effort_requirement_detail', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="例：提案内容を継続的に実行いただくことが成果に影響します。"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100">
+                <SimpleRadioGroup
+                  label="結果不満足時の返金等に関する確認"
+                  description="効果への不満と返金条件は別であることを整理するための項目です。"
+                  options={[
+                    '期待した成果が得られないことのみを理由とした返金はできない場合があります',
+                    '返金の可否は、別途定める契約・キャンセルポリシーに従います',
+                  ]}
+                  value={effectNonGuaranteeData.no_refund_for_unsatisfied_result_status ?? ''}
+                  onChange={(v) => updateEffectNonGuarantee('no_refund_for_unsatisfied_result_status', v)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="form-label">
+                    特記事項
+                    <span className="ml-1 text-xs font-normal text-gray-400">（任意）</span>
+                  </label>
+                  <textarea
+                    value={effectNonGuaranteeData.special_notes ?? ''}
+                    onChange={(e) => updateEffectNonGuarantee('special_notes', e.target.value)}
+                    className="form-input min-h-20 resize-y"
+                    maxLength={500}
+                    placeholder="その他、補足したい事項があればご記入ください。"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <SimpleCheckboxGroup
+                  label="説明内容の確認"
+                  options={['効果保証なし・個人差に関する説明を読み、理解しました。']}
+                  values={effectNonGuaranteeData.policy_read_status ?? []}
+                  onChange={(opt) => toggleEffectNonGuaranteeCheckbox('policy_read_status', opt)}
+                  required
+                />
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={(effectNonGuaranteeData.consent_confirmed ?? []).length > 0}
+                    onChange={() => toggleEffectNonGuaranteeCheckbox('consent_confirmed', '上記内容を確認のうえ、同意します。')}
+                  />
+                  <span
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      (effectNonGuaranteeData.consent_confirmed ?? []).length > 0
+                        ? 'border-brand-500 bg-brand-500'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {(effectNonGuaranteeData.consent_confirmed ?? []).length > 0 && (
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      上記内容を確認のうえ、同意します。<span className="ml-0.5 text-red-500">*</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">この同意がないと書類を生成できません。</p>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 4: 申込内容（入会申込書専用） */}
           {step === 4 && isMembershipForm && (
             <div className="space-y-6">
@@ -1399,8 +1898,8 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
             </div>
           )}
 
-          {/* Step 4: 契約内容（免責同意書・入会申込書・キャンセルポリシー以外） */}
-          {step === 4 && !isLiabilityWaiver && !isMembershipForm && !isCancellationPolicy && (
+          {/* Step 4: 契約内容（免責同意書・入会申込書・キャンセルポリシー・途中解約同意書・効果保証なし同意書以外） */}
+          {step === 4 && !isLiabilityWaiver && !isMembershipForm && !isCancellationPolicy && !isTerminationCoolingOffPolicy && !isEffectNonGuaranteePolicy && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
