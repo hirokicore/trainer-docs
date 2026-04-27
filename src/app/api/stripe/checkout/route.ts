@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
   const debugMode = request.nextUrl.searchParams.get('debug') === '1';
   const rawPlan = request.nextUrl.searchParams.get('plan');
   const plan = rawPlan === 'standard' || rawPlan === 'pro' ? rawPlan : 'pro';
-  const useTestPriceIds = process.env.STRIPE_USE_TEST_PRICE_IDS === 'true';
+  // STRIPE_USE_TEST_PRICE_IDS env に関わらず本番は常に live Price ID を使う
+  const useTestPriceIds = false;
 
   const supabase = await createClient();
   const {

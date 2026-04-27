@@ -87,7 +87,8 @@ export async function reactivateSubscription(subscriptionId: string) {
  * proration_behavior: 'none' で即時課金なし、次回更新時から適用。
  */
 export async function downgradeToStandard(subscriptionId: string, itemId: string) {
-  const useTest = process.env.STRIPE_USE_TEST_PRICE_IDS === 'true';
+  // STRIPE_USE_TEST_PRICE_IDS env に関わらず本番は常に live Price ID を使う
+  const useTest = false;
   const priceId = useTest
     ? process.env.STRIPE_STANDARD_TEST_PRICE_ID!
     : process.env.STRIPE_STANDARD_PRICE_ID!;
