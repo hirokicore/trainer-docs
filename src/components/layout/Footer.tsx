@@ -63,12 +63,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="mailto:support@trainer-docs.com"
-                  className="hover:text-white transition-colors"
-                >
+                <Link href="/feedback" className="hover:text-white transition-colors">
                   お問い合わせ
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

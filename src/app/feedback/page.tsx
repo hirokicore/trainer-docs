@@ -32,18 +32,17 @@ const feedbackItems = [
   },
 ];
 
-const usageOptions = [
-  { value: '', label: '選択してください（任意）' },
-  { value: 'not_used', label: 'まだ使っていない' },
-  { value: 'tried', label: '少し触ってみた' },
-  { value: 'in_use', label: '実務で使っている' },
+const inquiryTypeOptions = [
+  { value: 'feature_request', label: '機能のご要望' },
+  { value: 'bug_report', label: '不具合のご報告' },
+  { value: 'other', label: 'その他のお問い合わせ' },
 ];
 
 export default function FeedbackPage() {
   const [form, setForm] = useState({
     message: '',
     contact: '',
-    usage_status: '',
+    usage_status: 'feature_request',
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -61,7 +60,7 @@ export default function FeedbackPage() {
     setError('');
 
     if (!form.message.trim()) {
-      setError('ご意見・ご要望を入力してください');
+      setError('内容を入力してください');
       return;
     }
 
@@ -93,7 +92,7 @@ export default function FeedbackPage() {
       <section className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 text-white py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <span className="inline-block bg-brand-200 text-brand-900 text-sm font-bold px-4 py-1.5 rounded-full mb-6">
-            ご意見・ご要望
+            ご要望・お問い合わせ
           </span>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
             TrainerDocsを、
@@ -109,7 +108,7 @@ export default function FeedbackPage() {
             href="#feedback-form"
             className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-brand-700 font-bold text-lg px-8 py-4 rounded-xl transition-colors shadow-lg"
           >
-            意見を送る
+            フォームへ
             <ArrowRight size={20} />
           </a>
         </div>
@@ -172,16 +171,14 @@ export default function FeedbackPage() {
       <section id="feedback-form" className="bg-gray-50 py-20 px-4">
         <div className="max-w-xl mx-auto">
           <div className="mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">ご意見・ご要望フォーム</h2>
-            <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 text-sm text-gray-700 leading-relaxed space-y-3">
-              <p className="font-medium text-gray-900">TrainerDocsに関するご意見・ご要望をお聞かせください。</p>
-              <ul className="space-y-1.5 text-gray-600">
-                <li>・「ここが分かりにくい」「こういう機能が欲しい」など</li>
-                <li>・不具合の報告や画面表示の乱れ など</li>
-              </ul>
-              <p className="text-gray-500 text-xs">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">ご要望・お問い合わせフォーム</h2>
+            <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 text-sm text-gray-700 leading-relaxed">
+              <p className="text-gray-700">
+                TrainerDocs に関する機能のご要望・不具合のご報告・サービス全般のお問い合わせはこちらからお送りください。
+              </p>
+              <p className="mt-3 text-gray-500 text-xs">
                 いただいた内容は、今後の改善の参考にさせていただきます。
-                個別の回答が必要な場合は、返信用メールアドレスのご入力もお願いします。
+                個別の回答が必要な場合は、返信用の連絡先をご入力ください。
               </p>
             </div>
           </div>
@@ -208,30 +205,10 @@ export default function FeedbackPage() {
               onSubmit={handleSubmit}
               className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm space-y-6"
             >
-              {/* Main feedback */}
+              {/* Inquiry type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  ご意見・ご要望 <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="message"
-                  value={form.message}
-                  onChange={handleChange}
-                  placeholder={'例：初回体験から2ヶ月コースに切り替えるときの契約書を増やしてほしい\n例：オンライン指導のキャンセルポリシーをどう書けばいいか分からない\n例：使ってみたけど項目が多すぎて迷った'}
-                  required
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition resize-none"
-                />
-                <p className="mt-1.5 text-xs text-gray-400">
-                  思いついたことをそのまま書いてもらえれば大丈夫です。
-                </p>
-              </div>
-
-              {/* Usage status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  TrainerDocs の利用状況
-                  <span className="ml-1.5 text-xs text-gray-400 font-normal">任意</span>
+                  種別
                 </label>
                 <select
                   name="usage_status"
@@ -239,12 +216,31 @@ export default function FeedbackPage() {
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition bg-white"
                 >
-                  {usageOptions.map((opt) => (
+                  {inquiryTypeOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Main message */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  内容 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  placeholder={'例：初回体験から2ヶ月コースに切り替えるときの契約書を増やしてほしい\n例：〇〇の画面でエラーが出て先に進めない\n例：料金プランについて教えてほしい'}
+                  required
+                  rows={6}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition resize-none"
+                />
+                <p className="mt-1.5 text-xs text-gray-400">
+                  思いついたことをそのまま書いてもらえれば大丈夫です。
+                </p>
               </div>
 
               {/* Contact */}
@@ -262,7 +258,7 @@ export default function FeedbackPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
                 />
                 <p className="mt-1.5 text-xs text-gray-400">
-                  返信が必要な方だけ入力してください。入力しなくてもフィードバックは届きます。
+                  返信が必要な方だけ入力してください。入力しなくても届きます。
                 </p>
               </div>
 
@@ -284,7 +280,7 @@ export default function FeedbackPage() {
                   </>
                 ) : (
                   <>
-                    送る
+                    送信する
                     <ArrowRight size={18} />
                   </>
                 )}
