@@ -38,7 +38,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/monitors" className="hover:text-white transition-colors">
+                <Link href="/feedback" className="hover:text-white transition-colors">
                   ご意見・ご要望
                 </Link>
               </li>

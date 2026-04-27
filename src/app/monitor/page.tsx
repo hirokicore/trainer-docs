@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// /monitor は /monitors へ転送
+// 旧 URL /monitor は /feedback へ転送（ブックマーク・外部リンク互換）
 export default function MonitorRedirectPage() {
-  redirect('/monitors');
+  redirect('/feedback');
 }

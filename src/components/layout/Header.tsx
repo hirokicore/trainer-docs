@@ -37,7 +37,7 @@ export default function Header() {
           <Link href="/#pricing" className="text-gray-600 hover:text-gray-900 text-sm">
             料金
           </Link>
-          <Link href="/monitors" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg font-medium transition-colors hover:bg-gray-50">
+          <Link href="/feedback" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg font-medium transition-colors hover:bg-gray-50">
             ご意見・ご要望
           </Link>
           {user ? (
@@ -100,7 +100,7 @@ export default function Header() {
             料金
           </Link>
           <Link
-            href="/monitors"
+            href="/feedback"
             className="block text-gray-600 text-sm px-4 py-2 rounded-lg font-medium text-center hover:bg-gray-50"
             onClick={() => setMenuOpen(false)}
           >

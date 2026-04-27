@@ -984,7 +984,7 @@ export default function TrainerForm({ isSubscribed = false, isPro = false }: { i
               <p className="text-[11px] text-gray-400 pt-1">
                 章立て構成のテンプレート追加など、ご希望があれば
                 <Link
-                  href="/monitors"
+                  href="/feedback"
                   className="ml-1 underline underline-offset-2 hover:text-gray-600"
                 >
                   フィードバックフォーム

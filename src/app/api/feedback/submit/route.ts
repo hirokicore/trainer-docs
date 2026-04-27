@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// TODO: DBスキーマ migration が可能になったら monitor_applications テーブルを
-//       feedback_submissions などに置き換え、カラムも整理する。
-//       現状は既存テーブルに以下のようにマッピングして保存:
-//         name          ← '匿名'（固定）
-//         email         ← contact（任意入力、UNIQUE 制約なし）
-//         activity_status ← usage_status（任意選択）
-//         message       ← message（必須）
-
 export async function POST(request: NextRequest) {
   let body: { message: string; contact?: string; usage_status?: string };
 
@@ -26,12 +18,11 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // email カラムは NOT NULL のため未入力時は匿名識別子を入れる。
-  // UNIQUE 制約は migration 004 で削除済みなので衝突しない。
-  const emailValue =
-    contact.trim() || `anon_${crypto.randomUUID()}`;
+  // contact は任意項目。email カラムは NOT NULL のため未入力時は匿名識別子を格納する。
+  // feedback_submissions.email に UNIQUE 制約はないため、同一アドレスの複数送信も可。
+  const emailValue = contact.trim() || `anon_${crypto.randomUUID()}`;
 
-  const { error } = await supabase.from('monitor_applications').insert({
+  const { error } = await supabase.from('feedback_submissions').insert({
     name: '匿名',
     email: emailValue,
     activity_status: usage_status.trim() || '未回答',
@@ -40,7 +31,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    console.error('[monitors/apply] Supabase insert error:', {
+    console.error('[feedback/submit] Supabase insert error:', {
       code: error.code,
       message: error.message,
       details: error.details,

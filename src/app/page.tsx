@@ -111,7 +111,7 @@ export default function HomePage() {
               <ArrowRight size={20} />
             </Link>
             <Link
-              href="/monitors"
+              href="/feedback"
               className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium text-lg px-8 py-4 rounded-xl border border-white/30 transition-colors"
             >
               ご意見・ご要望を送る
