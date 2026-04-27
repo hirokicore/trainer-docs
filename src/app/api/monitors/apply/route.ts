@@ -30,16 +30,24 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // email は UNIQUE 制約があるため、未入力時は衝突しにくい一意な値を生成
+  const emailValue = contact.trim() || `anon_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
   const { error } = await supabase.from('monitor_applications').insert({
     name: '匿名',
-    email: contact.trim() || `anon_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+    email: emailValue,
     activity_status: usage_status.trim() || '未回答',
     message: message.trim(),
-    status: 'feedback',
+    // status の CHECK 制約: ('pending', 'approved', 'rejected')
+    status: 'pending',
   });
 
   if (error) {
-    console.error('Feedback submission error:', error);
+    console.error('[monitors/apply] Supabase insert error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    });
     return NextResponse.json({ error: '送信に失敗しました。しばらく時間をおいて再度お試しください。' }, { status: 500 });
   }
 
