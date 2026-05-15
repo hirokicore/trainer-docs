@@ -23,7 +23,6 @@ export type DocumentType =
   | 'membership_form'
   | 'cancellation_policy'
   | 'termination_coolingoff_policy'
-  | 'mid_cancel_agreement'
   | 'effect_disclaimer'
   | 'effect_non_guarantee_policy';
 
@@ -35,7 +34,6 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   membership_form: '入会申込書',
   cancellation_policy: 'キャンセル・返金ポリシー同意書',
   termination_coolingoff_policy: '途中解約・クーリングオフ同意書',
-  mid_cancel_agreement: '途中解約・クーリングオフ同意書',
   effect_disclaimer: '効果保証なし同意書',
   effect_non_guarantee_policy: '効果保証なし・個人差に関する同意書',
 };
@@ -53,7 +51,6 @@ export const PDF_DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   membership_form: '入会申込書',
   cancellation_policy: 'キャンセル・返金ポリシー同意書',
   termination_coolingoff_policy: '途中解約・クーリングオフ同意書',
-  mid_cancel_agreement: '途中解約・クーリングオフ同意書',
   effect_disclaimer: '効果保証なし同意書',
   effect_non_guarantee_policy: '効果保証なし・個人差に関する同意書',
 };
